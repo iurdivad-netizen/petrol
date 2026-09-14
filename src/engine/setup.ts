@@ -7,7 +7,7 @@
  * mechanical consequence and is represented only as a label.
  */
 
-import { PROSPECTING_SQUARES, PROVISIONAL_MOVE_VALUES, TRACK } from '../data/board';
+import { PROSPECTING_SQUARES, TRACK, moveValueFor } from '../data/board';
 import {
   BANK_STARTING_CASH,
   CARDS_PER_PLAYER,
@@ -33,17 +33,53 @@ export interface NewGameOptions {
   secondPassagem?: boolean;
 }
 
-/** Builds the deck for a player count, then assigns provisional move values. */
-export function buildDeck(playerCount: number): Card[] {
-  const composition = DECK_COMPOSITION[playerCount];
-  if (!composition) throw new Error(`No deck composition for ${playerCount} players`);
+/**
+ * The full 60-card physical deck. Move values are a property of the printed
+ * card, so they are fixed here once and the same card keeps its number at every
+ * player count.
+ */
+export function fullDeck(): Card[] {
+  const composition = DECK_COMPOSITION[6];
+  if (!composition) throw new Error('Missing the six-player composition');
 
   const cards: Card[] = [];
   for (const [type, qty] of Object.entries(composition) as [CardType, number][]) {
     for (let i = 0; i < qty; i++) {
-      const move = PROVISIONAL_MOVE_VALUES[cards.length % PROVISIONAL_MOVE_VALUES.length] as number;
-      cards.push({ id: `${type}-${i}`, type, move });
+      cards.push({ id: `${type}-${i}`, type, move: moveValueFor(i, qty) });
     }
+  }
+  return cards;
+}
+
+/**
+ * The deck for a player count. The booklet has the banker shuffle all 60 cards
+ * and "retirará do jogo as que sobrarem" — remove the surplus — so this takes
+ * the per-type counts from the table out of the physical deck rather than
+ * printing a different deck per player count.
+ */
+/** Takes `count` items spread evenly across `items`, endpoints included. */
+function pickSpread<T>(items: readonly T[], count: number): T[] {
+  if (count >= items.length) return items.slice();
+  if (count <= 1) return items.length ? [items[Math.floor(items.length / 2)] as T] : [];
+  return Array.from(
+    { length: count },
+    (_, i) => items[Math.round((i * (items.length - 1)) / (count - 1))] as T,
+  );
+}
+
+export function buildDeck(playerCount: number): Card[] {
+  const composition = DECK_COMPOSITION[playerCount];
+  if (!composition) throw new Error(`No deck composition for ${playerCount} players`);
+
+  const all = fullDeck();
+  const cards: Card[] = [];
+  for (const [type, qty] of Object.entries(composition) as [CardType, number][]) {
+    const ofType = all.filter((c) => c.type === type);
+    // Spread the kept cards across the type's move values instead of taking the
+    // first few. Taking a prefix would keep only the lowest numbers, which at
+    // two players left a deck averaging a move of 2 — the marker never
+    // completed a lap and no company was ever paid.
+    cards.push(...pickSpread(ofType, qty));
   }
 
   const expected = playerCount * CARDS_PER_PLAYER;

@@ -284,8 +284,26 @@ the opportunity is lost.
 1. **Track length and layout.** The booklet numbers 20 *space types* but does not say how
    many physical squares surround the map, nor in what order the types appear, nor which
    square is opposite *Passagem de Ano* (needed for the ≤4-player second-payout rule).
-2. **Per-card move values.** Each of the 60 cards is printed with the number of squares to
-   advance. The booklet does not tabulate them.
+2. **Per-card move values.** ~~Unknown.~~ **RECONSTRUCTED — the one part of
+   this game that is designed rather than found**, and labelled as such in the
+   code. No photograph of the deck exists. One real value is known (a camião
+   cisterna card carries 7) and movement is always forward.
+
+   The mean is pinned by the booklet's own numbers rather than guessed. A
+   tanker costs 300 M and pays 100 M a year, so it needs **three** Passagem de
+   Ano crossings to break even. The booklet scales petroleiro cards 1, 2, 3, 4,
+   5 with the player count, and offers the optional second Passagem de Ano at
+   **four players or fewer** — exactly the counts where a tanker is marginal.
+   A mean move of 5 reproduces that: simulated games yield 1.6, 2.9, 4.0, 4.9
+   and 5.9 years at 2–6 players, so a tanker is a loss at two, marginal at four
+   and sound at six. A mean of 7 or 8 would make the booklet's own rule
+   pointless at four players.
+
+   A uniform spread of **1–9**, distributed evenly within each card type, gives
+   that mean and contains the confirmed 7. Values are not correlated with card
+   type, because nothing suggests a card's privilege predicts its number and
+   inventing such a correlation would be inventing design. A single photograph
+   of the deck replaces this.
 3. ~~**Map geography.**~~ **RESOLVED.** Read cell by cell off the physical
    board by the project owner: **10 rows × 15 columns = 150 cells**, of which
    **85 are prospecting squares** (47 land, 38 sea), 14 the **porto**, 14 the

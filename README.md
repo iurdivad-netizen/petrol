@@ -52,8 +52,9 @@ Three things are printed on components rather than in the booklet:
 2. ~~**Map geography**~~ — **resolved.** 10 × 15 = 150 cells: 85 prospecting
    (47 land, 38 sea), 14 porto, 14 card panel, 37 plain illustration where the
    grid simply stops.
-3. **Per-card move values** — the number of squares each of the 60 cards advances the
-   marker.
+3. **Per-card move values** — reconstructed rather than found, and the only
+   designed numbers in the game. Derived from the booklet's own economics: see
+   `docs/RULES.md` §12.
 
 A legible board scan closes 1 and 2; card photographs close 3.
 

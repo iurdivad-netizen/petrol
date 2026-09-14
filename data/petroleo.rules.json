@@ -6,7 +6,7 @@
   "complete": false,
   "incompleteBecause": [
     "board.track top and right edges",
-    "cards.moveValues"
+    "cards.moveValues (reconstructed, not evidenced)"
   ],
   "identity": {
     "title": "Petróleo",
@@ -159,9 +159,22 @@
       }
     },
     "moveValues": {
-      "value": null,
-      "confidence": "unknown",
-      "blocks": "Each card is printed with the number of squares the blue marker advances. Not tabulated in the booklet; needs card photographs."
+      "status": "reconstructed",
+      "confidence": "designed, not evidenced",
+      "range": [
+        1,
+        9
+      ],
+      "meanMove": 5,
+      "distribution": "spread evenly within each card type; not correlated with type",
+      "confirmed": [
+        {
+          "type": "camiaoCisterna",
+          "move": 7
+        }
+      ],
+      "derivation": "A tanker (300 M, 100 M/year) needs three Passagem de Ano crossings to break even. The booklet scales petroleiro cards 1-5 with player count and permits the optional second Passagem de Ano at 4 players or fewer - exactly where a tanker is marginal. A mean move of 5 over a 48-cell track and 10 turns per player reproduces that: 1.6, 2.9, 4.0, 4.9, 5.9 years at 2-6 players. A higher mean would make the booklet's own rule pointless.",
+      "note": "The physical deck is 60 cards; move values are fixed per printed card and the per-player-count deck is a spread subset, so the mean holds at every player count."
     },
     "cardAnatomy": {
       "source": "photograph of a real 'COMPRE UM CAMIÃO CISTERNA' card",

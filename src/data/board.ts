@@ -195,21 +195,54 @@ export const INDUSTRIAL_DISPLAY_IDS: readonly string[] = [
 export const PROSPECTING_SQUARES = MAP.squares.filter((s) => s.region === 'prospecting');
 
 /**
- * Per-card move values. Still provisional (RULES.md §12) — they are printed on
- * the cards, not listed in the booklet.
+ * Per-card move values — RECONSTRUCTED, not found.
  *
- * A photograph of one real card settles the card's anatomy and gives a single
- * confirmed value: a "COMPRE UM CAMIÃO CISTERNA" card carries 7, shown both on
- * the edge tab beside the type name and as "AVANCE (7) CASAS". So the tab
- * number and the move value are the same number, and movement is always
- * forward — the booklet's "sempre na direcção da seta" rules out any
- * move-backwards card.
+ * No photograph of the full deck exists, so unlike everything else in this
+ * project these numbers are a reasoned design, and they are labelled as such.
+ * What follows is the reasoning, so it can be judged and replaced.
  *
- * Until a full set of card photographs is available, values are assigned from
- * this cycle in deck order: deterministic and stable, without pretending to be
- * authentic.
+ * The evidence and constraints:
+ *
+ *  1. One real value is known: a "COMPRE UM CAMIÃO CISTERNA" card carries 7,
+ *     printed as a single digit in a circle.
+ *  2. Movement is always forward — the booklet's "sempre na direcção da seta"
+ *     rules out negative values.
+ *  3. The track is 48 cells and every player takes exactly 10 turns, so a game
+ *     of N players moves the marker 10 x N x (mean move) cells in total.
+ *  4. A tanker costs 300 M and pays 100 M a year: it needs **three** Passagem
+ *     de Ano crossings just to break even.
+ *  5. The booklet scales petroleiro cards with the player count — 1, 2, 3, 4, 5
+ *     at 2 to 6 players — which tracks how many years a game of that size can
+ *     actually deliver.
+ *  6. The booklet offers an optional second Passagem de Ano at **4 players or
+ *     fewer**, i.e. exactly the counts where a tanker is a marginal investment.
+ *
+ * Constraints 3-6 pin the mean. At a mean of 5 a game yields roughly 2.1, 3.1,
+ * 4.2, 5.2 and 6.2 years at 2-6 players: a tanker is a loss at two players,
+ * marginal at four, and sound at five or six — which is precisely where the
+ * booklet draws its second-Passagem line. A mean of 7 or 8 would make that rule
+ * pointless at four players, so the mean is low, not high.
+ *
+ * A uniform spread of **1 to 9** gives that mean of 5 and contains the one
+ * confirmed value. Values are spread evenly within each card type rather than
+ * correlated with it, because no evidence suggests a card's privilege predicts
+ * its number, and inventing such a correlation would be inventing design.
+ *
+ * These are the last unverified numbers in the game. A single photograph of the
+ * deck replaces this function.
  */
-export const PROVISIONAL_MOVE_VALUES: readonly number[] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+export const MOVE_RANGE = { min: 1, max: 9 } as const;
+
+/**
+ * Spreads a card type's copies evenly across the move range. With five copies
+ * that yields 1, 3, 5, 7, 9 — so the camião cisterna deck contains the
+ * confirmed 7.
+ */
+export function moveValueFor(indexWithinType: number, countOfType: number): number {
+  if (countOfType <= 1) return Math.round((MOVE_RANGE.min + MOVE_RANGE.max) / 2);
+  const span = MOVE_RANGE.max - MOVE_RANGE.min;
+  return MOVE_RANGE.min + Math.round((indexWithinType * span) / (countOfType - 1));
+}
 
 /** The one move value confirmed from a photograph of a real card. */
 export const CONFIRMED_CARD_MOVES: ReadonlyArray<{ type: string; move: number }> = [
