@@ -55,5 +55,9 @@ ${html}</body>
 </html>
 `.replace('<div id="app"></div>', '</head>\n<body>\n<div id="app"></div>');
 
+// Written to both locations so the same URL works whichever Pages source is
+// active: the repository root for a branch-served site, and dist/ for the
+// GitHub Actions deployment.
 writeFileSync('play.html', standalone);
-console.log(`play.html           ${(standalone.length / 1024).toFixed(1)} kB`);
+writeFileSync(join('dist', 'play.html'), standalone);
+console.log(`play.html           ${(standalone.length / 1024).toFixed(1)} kB  (also dist/play.html)`);
