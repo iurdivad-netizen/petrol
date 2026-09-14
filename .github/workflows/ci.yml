@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches-ignore: [main]
+    branches-ignore: [main, claude/epic-ride-lp7k22]
   pull_request:
 
 jobs:

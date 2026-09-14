@@ -419,3 +419,96 @@ button.danger { background: var(--red); color: #fff; }
   background: linear-gradient(160deg, #e0a94f, #caa066);
   border-color: transparent;
 }
+
+/* ======================================================================
+   Narrow screens
+   ======================================================================
+
+   The board is a 15 x 11 grid of labelled cells, so it cannot simply shrink
+   and stay legible. Below 900px it becomes a single column, the cell captions
+   drop away (the number alone identifies the space, and the booklet's text is
+   one tap away), and a zoom control lets the board grow past the viewport with
+   horizontal scrolling when a player wants to read the map closely.
+   ====================================================================== */
+
+@media (max-width: 900px) {
+  #app { padding: 10px; }
+
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+
+  /* Controls come first on a phone: the board is reference, the action bar is
+     what you actually touch each turn. */
+  .layout > div:first-child { display: contents; }
+  .board-panel { order: 1; }
+  .controls-panel { order: 2; }
+  .layout > div:last-child { order: 3; display: grid; gap: 12px; }
+
+  .board { min-width: 0; }
+  .board-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .board-wrap.zoomed .board { min-width: 820px; }
+
+  .cell { font-size: 11px; padding: 1px; }
+  .cell .caption { display: none; }
+  .cell .marker { width: 10px; height: 10px; inset: auto 1px 1px auto; }
+
+  .site .licence { inset: 1px; border-width: 1px; font-size: 5px; }
+
+  .panel-inner { margin: 1px; padding: 2px; border-width: 1px; }
+  .panel-inner .deck-box { font-size: 5px; padding: 2px 1px; }
+  .panel-inner .karto-mark { font-size: 9px; }
+  .panel-inner .karto-mark span { font-size: 5px; letter-spacing: 0.2em; }
+  .region-label { font-size: 5px; }
+
+  /* Comfortable touch targets. */
+  button { padding: 11px 16px; min-height: 44px; }
+  .actions { gap: 10px; }
+
+  /* Cards become a swipeable strip rather than a wrapping grid. */
+  .hand {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+    scroll-snap-type: x mandatory;
+  }
+  .card { flex: 0 0 auto; scroll-snap-align: start; }
+
+  .log { max-height: 180px; }
+  .player { font-size: 12px; }
+}
+
+@media (max-width: 520px) {
+  #app { padding: 8px; }
+  .banner { font-size: 11px; padding: 8px 10px; }
+  .setup .title { font-size: 34px; }
+  .cell { font-size: 9px; }
+  .card { width: 104px; min-height: 152px; }
+}
+
+/* Zoom control — only meaningful where the board has been scaled down. */
+.zoom-bar { display: none; }
+@media (max-width: 900px) {
+  .zoom-bar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+  .zoom-bar button { padding: 6px 12px; min-height: 0; font-size: 12px; }
+}
+
+/* The reconstruction note is a disclosure, not a wall of text. */
+.banner summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: #fff;
+  list-style-position: outside;
+}
+.banner summary::marker { color: var(--ochre); }
+.banner > div { margin-top: 8px; }
+
+@media (max-width: 900px) {
+  /* The corner pennant must not swallow the cell's number once cells are small. */
+  .cell.pennant::after { border-width: 0 0 8px 8px; }
+}

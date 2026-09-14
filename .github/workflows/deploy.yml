@@ -1,8 +1,10 @@
 name: Build and deploy
 
+# The repository's default branch is claude/epic-ride-lp7k22; main does not
+# exist. Deploy from either so this keeps working if main is created later.
 on:
   push:
-    branches: [main]
+    branches: [main, claude/epic-ride-lp7k22]
   workflow_dispatch:
 
 permissions:

@@ -35,6 +35,8 @@ const DEBUG = new URLSearchParams(location.search).has('debug');
 let state: GameState | null = null;
 let selected = new Set<string>();
 let notice = '';
+/** Narrow screens only: enlarge the board and scroll it instead of fitting it. */
+let boardZoomed = false;
 
 const app = document.getElementById('app')!;
 
@@ -133,8 +135,15 @@ function renderSetup(): void {
 
 function provisionalBanner(): HTMLElement {
   const open = TRACK.cells.filter((c) => !c.verified).length;
-  const b = el('div', 'banner');
-  b.innerHTML =
+  // Collapsed by default so it never eats the first screen on a phone; the
+  // detail matters, but not before the board.
+  const b = document.createElement('details');
+  b.className = 'banner';
+  const summary = document.createElement('summary');
+  summary.textContent = 'Reconstrução — o que é original e o que não é';
+  b.appendChild(summary);
+  const body = el('div');
+  body.innerHTML =
     '<strong>Reconstrução.</strong> As regras, os preços, os lucros, as casas do tabuleiro e a ' +
     'grelha do mapa vêm do livro de regras original da Karto e do próprio tabuleiro, e estão ' +
     'verificados' +
@@ -142,6 +151,7 @@ function provisionalBanner(): HTMLElement {
     '. O <em>número de casas de cada carta</em> é uma reconstrução: não existe fotografia do ' +
     'baralho, e os valores foram deduzidos da economia do próprio jogo — ver ' +
     '<code>docs/RULES.md §12</code>.';
+  b.appendChild(body);
   return b;
 }
 
@@ -499,8 +509,14 @@ function renderGame(s: GameState): void {
 
   const layout = el('div', 'layout');
   const left = el('div');
-  const boardPanel = el('div', 'panel');
-  const wrap = el('div', 'board-wrap');
+  const boardPanel = el('div', 'panel board-panel');
+
+  // On a phone the board is scaled to fit; this lets a player enlarge it and
+  // scroll, which is the only way a 15 x 11 grid stays readable at that size.
+  const zoomBar = el('div', 'zoom-bar');
+  zoomBar.append(el('span', 'muted', 'Tabuleiro:'));
+
+  const wrap = el('div', `board-wrap${boardZoomed ? ' zoomed' : ''}`);
   wrap.appendChild(
     renderBoard(s, {
       onSiteClick,
@@ -508,9 +524,17 @@ function renderGame(s: GameState): void {
       selectedSiteIds: selected,
     }),
   );
+  const fitBtn = button('Ajustar', () => { boardZoomed = false; render(); }, 'secondary');
+  const zoomBtn = button('Ampliar', () => { boardZoomed = true; render(); }, 'secondary');
+  (boardZoomed ? fitBtn : zoomBtn).classList.remove('secondary');
+  zoomBar.append(fitBtn, zoomBtn);
+  boardPanel.appendChild(zoomBar);
+
   boardPanel.appendChild(wrap);
   left.appendChild(boardPanel);
-  left.appendChild(controls(s));
+  const controlPanel = controls(s);
+  controlPanel.classList.add('controls-panel');
+  left.appendChild(controlPanel);
   if (DEBUG) left.appendChild(debugPanel(s));
 
   const right = el('div');
