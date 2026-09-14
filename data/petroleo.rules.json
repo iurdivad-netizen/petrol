@@ -32,14 +32,14 @@
     }
   },
   "companies": {
-    "note": "Historical trademarks. Swap this array for a trademark-free set; the engine treats company identity as pure data.",
+    "note": "Corrected from a photograph of a real copy showing SACOR licence tiles. Collector sources list CEPSA/ESSO/GALP/MOBIL/SHELL/TOTAL, which is anachronistic for 1976: the GALP brand was created that year and its logo only launched in 1978, while SACOR and SONAP were the Portuguese operators of the period. Trademarks, kept as data — swap this array for a trademark-free set.",
     "list": [
-      "CEPSA",
+      "SACOR",
+      "SONAP",
       "ESSO",
-      "GALP",
       "MOBIL",
       "SHELL",
-      "TOTAL"
+      "BP"
     ]
   },
   "components": {
@@ -106,7 +106,7 @@
     "licencesAreBoughtNotDealt": true
   },
   "deckComposition": {
-    "note": "Cards removed down to player count. Every column totals exactly 10 cards per player.",
+    "note": "Cards removed down to player count. Every column totals exactly 10 cards per player. These seven purchase types are the COMPLETE deck: there are no event cards. Nationalisation, fires, storms, taxes and oil-price swings are board spaces, not cards.",
     "byPlayerCount": {
       "6": {
         "torreOuLicenca": 14,
@@ -163,6 +163,18 @@
       "value": null,
       "confidence": "unknown",
       "blocks": "Each card is printed with the number of squares the blue marker advances. Not tabulated in the booklet; needs card photographs."
+    },
+    "cardAnatomy": {
+      "source": "photograph of a real 'COMPRE UM CAMIÃO CISTERNA' card",
+      "layout": "Jogos Karto mark at the head; left tab with the type name and a circled number; title across the middle; 'AVANCE (n) CASAS' down the right edge",
+      "tabNumberEqualsMoveValue": true,
+      "movementAlwaysForward": true,
+      "confirmedMoves": [
+        {
+          "type": "camiaoCisterna",
+          "move": 7
+        }
+      ]
     }
   },
   "turn": {

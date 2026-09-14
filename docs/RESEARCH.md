@@ -72,7 +72,8 @@ extract the oil in exchange for payment. The state levies **taxes** and grants
 **royalties** to the companies.
 
 Each player runs one of six real-world oil companies:
-**CEPSA, ESSO, GALP, MOBIL, SHELL, TOTAL.**
+**SACOR, SONAP, ESSO, MOBIL, SHELL, BP** — see §11; the collector list
+"CEPSA, ESSO, GALP, MOBIL, SHELL, TOTAL" repeated below is anachronistic.
 
 Currency: **Kartos**, denominated in millions, physically represented as bank cheques
 drawn on the **Banco da Kartolândia**.
@@ -344,3 +345,31 @@ duplicate-licence rule, bank borrowing at 10%, and that licences score zero.
 **Method verdict:** search-summary reconstruction reliably recovered *structure* and got
 the design character right, but was unreliable on *numbers* and blind to entire subsystems.
 Declining to implement on it was the correct call.
+
+---
+
+## 11. Second scorecard — a secondary account tested against the booklet
+
+A later summary of the deck's composition was offered to the project, citing
+Ludopedia. Checked line by line against the Karto booklet, most of it does not
+hold. Recorded here so it is not reintroduced.
+
+| Claim | Verdict against the booklet |
+| --- | --- |
+| "~12–14 event cards: nationalisations, reprivatisations, strikes, fires, taxes" | **False, and the most consequential error.** The deck has seven purchase types and nothing else. Nationalisation, Livre Empresa, fires, storms and every tax are *board spaces* (§9). No strike rule exists anywhere in the game. |
+| "~18–20 prospecting/concession cards" | **False.** *Compre 1 torre ou 1 licença* is 14 cards at six players, 8 at two. |
+| "~16–18 construction cards" | **False.** Reservoir cards total 36 at six players — the largest block in the deck by far. |
+| "~10–12 logistics cards" | **Correct.** Petroleiro 5 + camião 5 = 10 at six players. |
+| "A card names a brand and a price: *Licença GALP em Terra por X Kartos*" | **False on both counts.** The booklet: "os símbolos das companhias não são distribuídos, pois eles representam as licenças que cada um vai comprando conforme as necessidades." Prices are fixed in §8, identical on every card. |
+| "Some cards say *Recuar 2*" | **False.** "O marcador azul andará sempre à volta das casas que cercam o mapa, e sempre na direcção da seta." |
+| "Lucky cards offer discounts, others charge urgency fees" | **False.** No per-card price variation exists. |
+| "The oil price oscillates according to the card played" | **False.** Price movements are spaces 14 and 19, reached by the marker. |
+
+The single correct proportion (logistics) is the one that happens to coincide
+with the booklet. The pattern — plausible-sounding structure, invented
+specifics, real URLs that do not contain the claims — matches the failure mode
+already documented in §10.
+
+**Method note:** the accompanying *photograph* was valuable and is the reason
+the company list in §1 is now corrected. Images of the artefact have been
+reliable throughout this project; prose about the artefact has not.

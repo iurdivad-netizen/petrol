@@ -147,9 +147,23 @@ export const MAP: { verified: boolean; columns: number; rows: number; squares: M
 };
 
 /**
- * Per-card move values are likewise unread (RULES.md §12) — they are printed on
- * the cards, not listed in the booklet. Until card photographs settle it, move
- * values are assigned from this cycle in deck order, which keeps totals stable
- * and the game deterministic without pretending to be authentic.
+ * Per-card move values. Still provisional (RULES.md §12) — they are printed on
+ * the cards, not listed in the booklet.
+ *
+ * A photograph of one real card settles the card's anatomy and gives a single
+ * confirmed value: a "COMPRE UM CAMIÃO CISTERNA" card carries 7, shown both on
+ * the edge tab beside the type name and as "AVANCE (7) CASAS". So the tab
+ * number and the move value are the same number, and movement is always
+ * forward — the booklet's "sempre na direcção da seta" rules out any
+ * move-backwards card.
+ *
+ * Until a full set of card photographs is available, values are assigned from
+ * this cycle in deck order: deterministic and stable, without pretending to be
+ * authentic.
  */
 export const PROVISIONAL_MOVE_VALUES: readonly number[] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+/** The one move value confirmed from a photograph of a real card. */
+export const CONFIRMED_CARD_MOVES: ReadonlyArray<{ type: string; move: number }> = [
+  { type: 'camiaoCisterna', move: 7 },
+];

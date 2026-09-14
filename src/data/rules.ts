@@ -9,7 +9,22 @@
 
 import type { CardType, DepositKind, Terrain } from '../engine/types';
 
-export const COMPANIES = ['CEPSA', 'ESSO', 'GALP', 'MOBIL', 'SHELL', 'TOTAL'] as const;
+/**
+ * The six licensed companies.
+ *
+ * CORRECTED against a photograph of an actual copy, whose licence tiles read
+ * SACOR (red wordmark, green "S" shield). Secondary collector sources uniformly
+ * list "CEPSA, ESSO, GALP, MOBIL, SHELL, TOTAL", but that cannot be right for a
+ * 1976 Portuguese game: GALP did not exist as a brand until 1976 and its logo
+ * only launched in 1978, while SACOR and SONAP were the Portuguese operators of
+ * the day (both nationalised in 1975, merged into Petrogal in April 1976).
+ * A source describing the game's licences names exactly this set — the foreign
+ * majors plus "Sonap and Sacor, precursors of Galp".
+ *
+ * Trademarks, kept as data: replace this array to ship a trademark-free build.
+ * Nothing in the engine depends on the names.
+ */
+export const COMPANIES = ['SACOR', 'SONAP', 'ESSO', 'MOBIL', 'SHELL', 'BP'] as const;
 
 export const STARTING_CAPITAL = 200;
 export const STARTING_HAND = 4;

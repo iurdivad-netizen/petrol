@@ -194,33 +194,68 @@ h1, h2, h3 { margin: 0 0 8px; letter-spacing: 0.04em; }
 
 .hand { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 
+/*
+ * Card face follows a photographed original: the Jogos Karto mark at the head,
+ * a type tab down the left edge carrying the same number as the move, the title
+ * across the middle, and "AVANCE (n) CASAS" down the right edge.
+ */
 .card {
-  width: 96px;
-  min-height: 120px;
-  background: var(--cream);
-  border: 2px solid var(--rule);
-  border-radius: 5px;
-  padding: 6px;
+  width: 118px;
+  min-height: 168px;
+  background: #fbf7ec;
+  border: 1px solid #9d9384;
+  border-radius: 10px;
+  padding: 6px 4px;
   font-size: 11px;
   cursor: pointer;
+  display: grid;
+  grid-template-columns: 16px 1fr 16px;
+  gap: 2px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  transition: transform 0.12s ease;
+}
+.card:hover:not(:disabled) { transform: translateY(-5px); }
+.card:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.card .edge {
+  writing-mode: vertical-rl;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #4a4a4a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.card .edge.right { transform: rotate(180deg); }
+.card .body {
+  border-left: 1px solid #c8c0ad;
+  border-right: 1px solid #c8c0ad;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  transition: transform 0.12s ease;
+  padding: 4px 3px;
 }
-.card:hover:not(:disabled) { transform: translateY(-4px); }
-.card:disabled { opacity: 0.5; cursor: not-allowed; }
-.card .move {
-  align-self: flex-end;
-  background: var(--rule);
-  color: var(--cream);
-  border-radius: 50%;
-  width: 24px; height: 24px;
-  display: grid;
-  place-items: center;
+.card .karto { font-size: 7px; letter-spacing: 0.14em; color: #6b6b6b; text-transform: uppercase; }
+.card .title {
   font-weight: 700;
+  line-height: 1.25;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
-.card .title { font-weight: 700; line-height: 1.2; }
+.card .pip {
+  display: inline-grid;
+  place-items: center;
+  width: 16px; height: 16px;
+  border: 1px solid #4a4a4a;
+  border-radius: 50%;
+  font-size: 9px;
+  writing-mode: horizontal-tb;
+}
 
 /* --------------------------------------------------------------- actions */
 

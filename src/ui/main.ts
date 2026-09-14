@@ -19,6 +19,17 @@ import type { Action } from '../engine/actions';
 import type { GameState, Site } from '../engine/types';
 
 const SAVE_KEY = 'petroleo-karto-1976-save';
+
+/** Short type names for the card's edge tab, as printed on the original. */
+const SHORT_TYPE: Record<string, string> = {
+  torreOuLicenca: 'Torre/Licença',
+  reservatorioGas: 'Gás',
+  reservatorio6MT: '6 M.T.',
+  reservatorio4MT: '4 M.T.',
+  reservatorio2MT: '2 M.T.',
+  petroleiro: 'Petroleiro',
+  camiaoCisterna: 'Camião',
+};
 const DEBUG = new URLSearchParams(location.search).has('debug');
 
 let state: GameState | null = null;
@@ -418,10 +429,25 @@ function handView(s: GameState): HTMLElement {
 
   for (const card of p.hand) {
     const c = el('button', 'card');
-    c.appendChild(el('div', 'title', CARD_NAMES[card.type]));
+
+    // Left tab: the card type and its number, as printed on the original.
+    const left = el('div', 'edge');
+    left.append(SHORT_TYPE[card.type] ?? '');
+    left.appendChild(el('span', 'pip', String(card.move)));
+
+    const body = el('div', 'body');
+    body.appendChild(el('div', 'karto', 'Jogos Karto'));
+    body.appendChild(el('div', 'title', CARD_NAMES[card.type]));
     const usable = canUseCard(s, card);
-    c.appendChild(el('div', 'muted', usable ? 'Pode utilizar' : 'Só para negociar'));
-    c.appendChild(el('div', 'move', String(card.move)));
+    body.appendChild(el('div', 'muted', usable ? 'Pode utilizar' : 'Só para negociar'));
+
+    // Right edge: AVANCE (n) CASAS.
+    const right = el('div', 'edge right');
+    right.append('Avance');
+    right.appendChild(el('span', 'pip', String(card.move)));
+    right.append('Casas');
+
+    c.append(left, body, right);
     c.addEventListener('click', () => dispatch({ type: 'playCard', cardId: card.id }));
     hand.appendChild(c);
   }

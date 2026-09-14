@@ -29,6 +29,13 @@ Currency: **Milhões de Kartos** (M). All values below are in millions.
 
 ## 2. Components
 
+Physical appearance, from photographs of a real copy: towers are black moulded
+derricks; oil reservoirs are grey cylindrical tanks stamped with their capacity
+("6 M.T."); gas reservoirs are white domes; the tank truck is yellow and the
+tanker blue; the game marker is a blue round pawn; licences are white tiles
+carrying the company wordmark; cheques are printed "BANCO DA KARTOLÂNDIA" in
+denominations of 1, 5, 10, 20 and 50 M.K.
+
 | Component | Qty |
 | --- | --- |
 | Prospecting towers (*torres de prospecção*) | 28 |
@@ -60,7 +67,7 @@ identifies who owns a square, a tanker or a truck.
 3. The banker deals **4 cards to each player**; the rest form a face-down deck on the
    board square marked *«coloque aqui as cartas com as costas voltadas para cima»*.
 4. The banker gives each player **200 M Kartos** in cheques as starting capital.
-5. Each player chooses an oil company: **CEPSA, ESSO, GALP, MOBIL, SHELL, TOTAL**.
+5. Each player chooses an oil company: **SACOR, SONAP, ESSO, MOBIL, SHELL, BP**.
    Company licence sheets are *not* dealt out — licences are bought as needed.
 6. The blue marker starts on **Passagem de Ano**.
 
@@ -83,6 +90,22 @@ Verified: every column totals exactly 10 cards per player.
 
 Each card carries **two** indications: the **number of squares the blue marker advances**,
 and **what may be bought or negotiated**.
+
+### Card anatomy, from a photographed original
+
+A "COMPRE UM CAMIÃO CISTERNA" card shows the *Jogos Karto* mark at the head, a
+tab down the left edge carrying the type name and a circled number, the title
+across the middle over a faint illustration, and **"AVANCE ⑦ CASAS"** down the
+right edge. The tab number and the move number are the same. Movement is always
+forward — the booklet's "sempre na direcção da seta" leaves no room for a
+move-backwards card.
+
+**There are no event cards.** The table above is the complete deck: seven
+purchase types and nothing else. Nationalisation, fires, storms, taxes and oil
+price swings are all *board spaces* (§9), not cards. Likewise, cards do not name
+a company or a price — the booklet is explicit that company symbols are not
+dealt out ("os símbolos das companhias não são distribuídos"), and every price
+is fixed in §8 rather than varying card by card.
 
 ---
 
@@ -256,5 +279,7 @@ the opportunity is lost.
    advance. The booklet does not tabulate them.
 3. **Map geography.** Number and arrangement of land vs sea prospecting squares, and the
    position of the **porto** and the **zona industrial**.
+
+One value is now confirmed: a *camião cisterna* card carries **7**.
 
 A legible photograph or scan of the board closes 1 and 3; photographs of the cards close 2.
