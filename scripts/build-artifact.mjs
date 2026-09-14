@@ -6,8 +6,16 @@
  *
  *   npm run build && node scripts/build-artifact.mjs
  *
- * Emits dist/artifact.html: the page content only, with CSS and JS inlined and
- * no doctype/html/head/body wrapper.
+ * Emits two files:
+ *   dist/artifact.html — page content only, no doctype/html/head/body wrapper,
+ *                        for publishing as an Artifact.
+ *   play.html          — a complete standalone document at the repository root.
+ *
+ * play.html is committed deliberately. GitHub Pages on this repository serves
+ * the branch root, where index.html is the Vite dev entry and loads TypeScript
+ * a browser cannot execute. Committing the built page means the Pages site
+ * works with no repository setting to change. Regenerate with
+ * `npm run build:artifact` after any change to src/.
  */
 
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -35,3 +43,17 @@ ${js}
 
 writeFileSync(join('dist', 'artifact.html'), html);
 console.log(`dist/artifact.html  ${(html.length / 1024).toFixed(1)} kB`);
+
+const standalone = `<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Recriação jogável de PETRÓLEO, o jogo de tabuleiro da Karto de 1976.">
+<meta name="theme-color" content="#20303d">
+${html}</body>
+</html>
+`.replace('<div id="app"></div>', '</head>\n<body>\n<div id="app"></div>');
+
+writeFileSync('play.html', standalone);
+console.log(`play.html           ${(standalone.length / 1024).toFixed(1)} kB`);

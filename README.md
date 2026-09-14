@@ -59,12 +59,23 @@ A legible board scan closes 1 and 2; card photographs close 3.
 
 ## Playing it
 
-The quickest way is the published build — no install, nothing to clone:
+**On GitHub Pages:** https://iurdivad-netizen.github.io/petrol/play.html
 
-**https://claude.ai/code/artifact/f5134be1-a7c5-488b-99a7-b5680656f702**
+**Or as a published Artifact:** https://claude.ai/code/artifact/f5134be1-a7c5-488b-99a7-b5680656f702
 
-Pick a player count and play. The game saves to your browser automatically and
-offers to resume.
+Pick a player count and play. Works on phones. The game saves to your browser
+automatically and offers to resume.
+
+`play.html` is a committed build — a complete standalone page with the CSS and
+JS inlined. It exists because Pages on this repository serves the branch root,
+where `index.html` is the Vite dev entry and loads TypeScript no browser can
+execute. Committing the built page means Pages works with no repository setting
+to change. **Regenerate it with `npm run build:artifact` after changing
+anything under `src/`.**
+
+For a clean URL at the repository root instead, switch **Settings → Pages →
+Source** to **GitHub Actions**; `.github/workflows/deploy.yml` then publishes
+`dist/` on every push.
 
 ## Running it locally
 
