@@ -1,10 +1,16 @@
 name: Build and deploy
 
-# The repository's default branch is claude/epic-ride-lp7k22; main does not
-# exist. Deploy from either so this keeps working if main is created later.
+# Manual only.
+#
+# This repository's Pages source is a BRANCH, not GitHub Actions, so GitHub's
+# own "pages build and deployment" pipeline publishes the site from main's root
+# — which is why index.html is the committed build. actions/deploy-pages fails
+# by design under a branch source, so running this on every push would paint
+# the history red for no benefit.
+#
+# Switch Settings → Pages → Source to "GitHub Actions" to use this instead, and
+# restore the push trigger below.
 on:
-  push:
-    branches: [main, claude/epic-ride-lp7k22]
   workflow_dispatch:
 
 permissions:
