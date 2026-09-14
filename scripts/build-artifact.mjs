@@ -6,16 +6,18 @@
  *
  *   npm run build && node scripts/build-artifact.mjs
  *
- * Emits two files:
- *   dist/artifact.html — page content only, no doctype/html/head/body wrapper,
- *                        for publishing as an Artifact.
- *   play.html          — a complete standalone document at the repository root.
+ * Emits:
+ *   index.html, play.html            — at the repository root
+ *   dist/index.html, dist/play.html  — in the deployed bundle
+ *   dist/artifact.html               — fragment for publishing as an Artifact
  *
- * play.html is committed deliberately. GitHub Pages on this repository serves
- * the branch root, where index.html is the Vite dev entry and loads TypeScript
- * a browser cannot execute. Committing the built page means the Pages site
- * works with no repository setting to change. Regenerate with
- * `npm run build:artifact` after any change to src/.
+ * The root index.html is a COMMITTED BUILD, deliberately. GitHub Pages serving
+ * a branch root would otherwise hand the browser dev.html's TypeScript entry,
+ * which no browser can execute. Writing the built page to index.html makes the
+ * site work at its root URL under either Pages source mode. play.html is kept
+ * as an alias for links already shared.
+ *
+ * Regenerate with `npm run build:artifact` after any change under src/.
  */
 
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -58,6 +60,7 @@ ${html}</body>
 // Written to both locations so the same URL works whichever Pages source is
 // active: the repository root for a branch-served site, and dist/ for the
 // GitHub Actions deployment.
-writeFileSync('play.html', standalone);
-writeFileSync(join('dist', 'play.html'), standalone);
-console.log(`play.html           ${(standalone.length / 1024).toFixed(1)} kB  (also dist/play.html)`);
+for (const target of ['index.html', 'play.html', join('dist', 'index.html'), join('dist', 'play.html')]) {
+  writeFileSync(target, standalone);
+}
+console.log(`index.html          ${(standalone.length / 1024).toFixed(1)} kB  (also play.html, dist/index.html, dist/play.html)`);

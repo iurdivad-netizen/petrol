@@ -59,29 +59,33 @@ A legible board scan closes 1 and 2; card photographs close 3.
 
 ## Playing it
 
-**On GitHub Pages:** https://iurdivad-netizen.github.io/petrol/play.html
+**On GitHub Pages:** https://iurdivad-netizen.github.io/petrol/
 
 **Or as a published Artifact:** https://claude.ai/code/artifact/f5134be1-a7c5-488b-99a7-b5680656f702
 
 Pick a player count and play. Works on phones. The game saves to your browser
 automatically and offers to resume.
 
-`play.html` is a committed build — a complete standalone page with the CSS and
-JS inlined. It exists because Pages on this repository serves the branch root,
-where `index.html` is the Vite dev entry and loads TypeScript no browser can
-execute. Committing the built page means Pages works with no repository setting
-to change. **Regenerate it with `npm run build:artifact` after changing
-anything under `src/`.**
+### Why index.html is a committed build
 
-For a clean URL at the repository root instead, switch **Settings → Pages →
-Source** to **GitHub Actions**; `.github/workflows/deploy.yml` then publishes
-`dist/` on every push.
+GitHub Pages serving a branch root hands the browser whatever `index.html`
+contains. A Vite entry loading TypeScript will not run there, which is why the
+site was broken.
+
+So the repository's **`index.html` is the built, self-contained game**, and the
+Vite entry lives in **`dev.html`**. That makes the root URL work under either
+Pages source mode — branch or GitHub Actions — with nothing to configure.
+`play.html` is kept as an alias for links already shared.
+
+**Regenerate all of them with `npm run build:artifact` after changing anything
+under `src/`**, or the deployed page goes stale. `npm run dev` opens `dev.html`
+automatically.
 
 ## Running it locally
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173
+npm run dev        # opens http://localhost:5173/dev.html
 npm test           # 48 tests
 npm run typecheck
 npm run build      # static bundle in dist/
