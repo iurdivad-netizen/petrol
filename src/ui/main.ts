@@ -15,6 +15,7 @@ import { idleLicences, toweredSites } from '../engine/spaces';
 import { CARD_NAMES, COMPANIES, PRICES, SPACE_NAMES, SECOND_PASSAGEM_MAX_PLAYERS } from '../data/rules';
 import { MAP, TRACK } from '../data/board';
 import { companyColour, renderBoard } from './board-view';
+import { priceCard, rulesContent } from './rules-view';
 import type { Action } from '../engine/actions';
 import type { GameState, Site } from '../engine/types';
 
@@ -37,6 +38,38 @@ let selected = new Set<string>();
 let notice = '';
 /** Narrow screens only: enlarge the board and scroll it instead of fitting it. */
 let boardZoomed = false;
+
+/**
+ * The rulebook, opened over the game. Built once per open from the engine's own
+ * constants, so it always states the rules actually in force.
+ */
+function openRules(playerCount: number): void {
+  const existing = document.getElementById('rules-dialog');
+  if (existing) existing.remove();
+
+  const dialog = document.createElement('dialog');
+  dialog.id = 'rules-dialog';
+  dialog.className = 'rules-dialog';
+
+  const head = el('div', 'rules-head');
+  head.appendChild(el('h2', undefined, 'Regras'));
+  const close = button('Fechar', () => dialog.close(), 'secondary');
+  head.appendChild(close);
+  dialog.appendChild(head);
+
+  const bodyWrap = el('div', 'rules-body');
+  bodyWrap.appendChild(rulesContent(playerCount));
+  dialog.appendChild(bodyWrap);
+
+  // Clicking the backdrop closes it, as does Esc (native to <dialog>).
+  dialog.addEventListener('click', (e) => {
+    if (e.target === dialog) dialog.close();
+  });
+  dialog.addEventListener('close', () => dialog.remove());
+
+  document.body.appendChild(dialog);
+  dialog.showModal();
+}
 
 const app = document.getElementById('app')!;
 
@@ -127,6 +160,11 @@ function renderSetup(): void {
     );
     panel.appendChild(resume);
   }
+
+  const help = el('div', 'actions');
+  help.style.justifyContent = 'center';
+  help.appendChild(button('Ver as regras', () => openRules(4), 'secondary'));
+  panel.appendChild(help);
 
   wrap.appendChild(panel);
   wrap.appendChild(provisionalBanner());
@@ -255,7 +293,9 @@ function controls(s: GameState): HTMLElement {
   const p = s.players[s.currentPlayer]!;
   const pending = s.pending;
 
-  const heading = el('h3', undefined, `Vez de ${p.company}`);
+  const heading = el('div', 'turn-head');
+  heading.appendChild(el('h3', undefined, `Vez de ${p.company}`));
+  heading.appendChild(button('Regras', () => openRules(s.players.length), 'secondary'));
   wrap.appendChild(heading);
 
   const prompt = el('div', 'prompt');
@@ -539,10 +579,12 @@ function renderGame(s: GameState): void {
 
   const right = el('div');
   right.appendChild(playerPanel(s));
+  right.appendChild(priceCard());
   right.appendChild(logPanel(s));
   const tools = el('div', 'panel');
   const toolActions = el('div', 'actions');
   toolActions.append(
+    button('Regras', () => openRules(s.players.length)),
     button('Guardar', () => { save(); notice = 'Jogo guardado.'; render(); }, 'secondary'),
     button('Recomeçar', () => {
       if (confirm('Recomeçar o jogo? O jogo guardado será apagado.')) {

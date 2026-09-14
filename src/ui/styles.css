@@ -512,3 +512,82 @@ button.danger { background: var(--red); color: #fff; }
   /* The corner pennant must not swallow the cell's number once cells are small. */
   .cell.pennant::after { border-width: 0 0 8px 8px; }
 }
+
+/* ------------------------------------------------------------ rulebook */
+
+.turn-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.turn-head h3 { margin: 0; }
+.turn-head button { padding: 5px 12px; min-height: 0; font-size: 12px; }
+
+.rules-dialog {
+  width: min(860px, 94vw);
+  max-height: 88vh;
+  padding: 0;
+  border: 2px solid var(--rule);
+  border-radius: 8px;
+  background: var(--cream);
+  color: var(--ink);
+  overflow: hidden;
+}
+.rules-dialog::backdrop { background: rgba(10, 20, 30, 0.72); }
+
+.rules-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--rule);
+  color: var(--cream);
+  position: sticky;
+  top: 0;
+}
+.rules-head h2 { margin: 0; font-size: 18px; letter-spacing: 0.08em; }
+
+.rules-body { overflow-y: auto; max-height: calc(88vh - 56px); padding: 16px; }
+
+.rules { font-size: 13px; line-height: 1.55; }
+/* Prose keeps a readable measure; tables use the full width they need. */
+.rules > p, .rules > ul, .rules > ol { max-width: 68ch; }
+.rules > table { width: 100%; }
+.rules h3 {
+  margin: 20px 0 6px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--red);
+  border-bottom: 1px solid #cbbd9b;
+  padding-bottom: 3px;
+}
+.rules h3:first-of-type { margin-top: 8px; }
+.rules p { margin: 0 0 8px; }
+.rules ul, .rules ol { margin: 0 0 8px; padding-left: 20px; }
+.rules li { margin-bottom: 3px; }
+.rules table { max-width: 100%; margin-bottom: 8px; }
+
+/* Price tables: figures line up, income reads as income. */
+table.prices, table.spaces { font-variant-numeric: tabular-nums; }
+table.prices td:first-child, table.spaces td:nth-child(2) { text-align: left; }
+table.prices .gain { color: #1d7a3f; font-weight: 700; }
+table.spaces td:last-child { text-align: left; font-size: 12px; }
+table.spaces .teal-num,
+table.spaces .red-num {
+  color: #fff;
+  font-weight: 700;
+  text-align: center;
+  width: 2.2em;
+}
+table.spaces .teal-num { background: var(--teal); }
+table.spaces .red-num { background: var(--red); }
+
+@media (max-width: 900px) {
+  .rules-dialog { width: 96vw; max-height: 92vh; }
+  .rules-body { max-height: calc(92vh - 56px); padding: 12px; }
+  table.spaces td:last-child { font-size: 11px; }
+}
