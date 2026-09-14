@@ -12,8 +12,12 @@ The governing principle is fidelity, not reinterpretation:
 | --- | --- |
 | 1. Research | **Complete** — original Karto rules booklet obtained and transcribed |
 | 2. Specification | **Complete** for rules — `docs/RULES.md`, `data/petroleo.rules.json` |
-| 3. Prototype | Next |
-| 4–8. Full rules → Deployment | Not started |
+| 3. Prototype | **Complete** |
+| 4. Full rules | **Complete** — every booklet rule implemented |
+| 5. Visual refinement | Period palette and structure in place |
+| 6. Testing | **Complete** — 48 tests, full-game simulation at 2–6 players |
+| 7. Polish | Save/load, debug mode, event log done |
+| 8. Deployment | GitHub Pages workflow in place |
 
 The original 9-page Karto rules booklet (*"PETRÓLEO" — REGRAS*, Fábrica de Jogos Karto,
 Rua Delfim Ferreira 698, Porto) has been read in full. Every rule, price, income figure,
@@ -52,16 +56,95 @@ Three things are printed on components rather than in the booklet:
 
 A legible board scan closes 1 and 2; card photographs close 3.
 
+## Running it
+
+```bash
+npm install
+npm run dev        # http://localhost:5173
+npm test           # 48 tests
+npm run typecheck
+npm run build      # static bundle in dist/
+npm run preview    # serve the built bundle
+```
+
+Requires Node 22+. The build is a static bundle with no server, deployable to
+GitHub Pages or any static host — `vite.config.ts` sets `base: ''` so it works
+from a project subpath. `.github/workflows/deploy.yml` publishes `main` to Pages
+after the tests pass.
+
+Append `?debug` to the URL for the development panel: grant cash, nationalise or
+free a company, jump the marker to Passagem de Ano, and dump state to the
+console. It is hidden without the flag.
+
+**Controls.** Click a card to play it; click map squares to choose licences,
+towers and deposit sites; the action bar offers only what the rules permit at
+that moment. The game saves to `localStorage` on every action and offers to
+resume. Tested on current Chromium, Firefox and WebKit.
+
+## Architecture
+
+```
+UI  →  Action  →  applyAction()  →  GameState
+```
+
+The engine is pure, has no DOM dependency, and returns `{ ok, error }` for every
+action. `GameState` is plain JSON throughout — which is why save/load, replay
+and the JSON round-trip test all fall out of the design rather than being built.
+Randomness is a single seeded `mulberry32` whose state lives *inside*
+`GameState`, so a game replays exactly and any test can pin an outcome. Nothing
+outside `src/engine/rng.ts` may call `Math.random`.
+
+```
+src/engine/    types, rng, setup, economy, spaces, engine (turn machine), scoring
+src/data/      rules.ts (typed booklet constants), board.ts (PROVISIONAL)
+src/ui/        board-view.ts, main.ts, styles.css — rendering only, no rules
+tests/         48 tests: rules fidelity, gameplay, full-game simulation, economy
+docs/          RULES.md (authoritative), RESEARCH.md (dossier + scorecard)
+data/          petroleo.rules.json (canonical machine-readable ruleset)
+```
+
+All board and card data is quarantined in `src/data/board.ts`. Correcting the
+track means editing four arrays in that one file; the view derives its geometry
+from them and the tests re-check the invariants.
+
+## Testing
+
+48 tests, all passing. They cover deck composition at every player count, the
+price and income tables checked against the canonical JSON, the two track
+invariants, the development chain and its ordering constraint, payouts to all
+players, nationalisation across receipts, payments and scoring, the income-tax
+cash levy, confiscation timing, bankruptcy asset return, and scoring rules.
+
+Full games are simulated at 2–6 players, asserting that every solvent company
+takes exactly 10 turns, that components are conserved (the bank plus the table
+always equals the original supply), that a seed replays identically, and that a
+mid-game JSON round-trip reaches the same final scoreboard.
+
+## Known limitations
+
+1. **The track order, map geography and per-card move values are provisional**
+   (see above). Everything else comes from the booklet.
+2. **Three documented interpretations**, each flagged in the code where it is
+   made: whether a nationalised company's *entire* final total is halved or only
+   its deposits and trucks (the latter is implemented, since red markers sit only
+   on those and tankers are explicitly exempt); whether a bought card privilege
+   is exercised immediately or on the buyer's next turn (the latter, per "tem
+   direito a jogar novamente na sua vez", which also keeps every player at
+   exactly 10 own plays); and whether flat repair costs apply without owning the
+   relevant asset (charged unconditionally except where the booklet states a
+   condition).
+3. **No AI opponents.** Hot-seat local multiplayer only, by design — the brief
+   sequences AI after a correct, tested human game. The engine is AI-ready: it
+   is pure, exposes legality checks, and the test suite already contains a
+   working automaton driver.
+4. **Artwork is original.** Structure, palette and typography follow the 1976
+   board; no scanned assets are used. Company names are data (`COMPANIES` in
+   `src/data/rules.ts`) and can be swapped for a trademark-free set.
+
 ## Repository layout
 
 ```
-docs/RULES.md               Authoritative reconstructed ruleset, verified against the
-                            original Karto rules booklet
-docs/RESEARCH.md            Phase 1 dossier (superseded for rules; retains the
-                            web-only reconstruction scorecard)
-data/petroleo.rules.json    Machine-readable reconstructed ruleset (versioned).
-                            `null` + confidence "unknown" means NOT EVIDENCED — the
-                            engine must refuse to start rather than substitute a default.
+See the architecture section above.
 ```
 
 ## Legal
