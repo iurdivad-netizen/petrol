@@ -1,209 +1,250 @@
 {
-  "$comment": "PETRÓLEO (Karto, 1976) — machine-readable reconstructed ruleset. Single source of truth for the engine. Every value carries a confidence tag; `null` with confidence \"unknown\" means NOT YET EVIDENCED — the engine must refuse to start rather than substitute a default. See docs/RESEARCH.md.",
-  "specVersion": "0.1.0-research",
+  "$comment": "PETRÓLEO (Karto, 1976) — machine-readable ruleset, verified against the original Karto rules booklet. Single source of truth for the engine. `null` + confidence \"unknown\" means NOT EVIDENCED; the engine must refuse to start rather than substitute a default. See docs/RULES.md.",
+  "specVersion": "1.0.0",
   "gameId": "petroleo-karto-1976",
+  "source": "Original Karto rules booklet, 'PETRÓLEO — REGRAS', 9pp A5, Fábrica de Jogos Karto, Rua Delfim Ferreira 698, Porto.",
   "complete": false,
+  "incompleteBecause": ["board.track", "board.map", "cards.moveValues"],
 
   "identity": {
     "title": "Petróleo",
-    "publisher": "Karto",
-    "publisherCity": "Porto, Portugal",
+    "publisher": "Karto (Fábrica de Jogos Karto)",
+    "publisherAddress": "Rua Delfim Ferreira 698, Porto, Portugal",
     "year": 1976,
-    "players": { "min": 2, "max": 6, "confidence": "medium" },
-    "playingTimeMinutes": { "value": 50, "confidence": "medium" },
-    "minAge": { "value": 8, "confidence": "medium" }
+    "players": { "min": 2, "max": 6 },
+    "playingTimeMinutes": 50,
+    "minAge": 8
   },
 
   "setting": {
     "country": "Kartolândia",
     "bank": "Banco da Kartolândia",
-    "currency": { "name": "Kartos", "unit": "millions", "form": "cheques" }
+    "currency": { "name": "Kartos", "unit": "millions", "symbol": "M", "form": "cheques" }
   },
 
   "companies": {
-    "confidence": "high",
-    "note": "Historical trademarks. Swap this array for a trademark-free set if required; the engine treats company identity as pure data.",
+    "note": "Historical trademarks. Swap this array for a trademark-free set; the engine treats company identity as pure data.",
     "list": ["CEPSA", "ESSO", "GALP", "MOBIL", "SHELL", "TOTAL"]
   },
 
   "components": {
+    "prospectingTowers": 28,
+    "oilTankers": 5,
+    "tankTrucks": 5,
+    "oilReservoirs": { "6MT": 9, "4MT": 9, "2MT": 9 },
+    "gasReservoirs": 9,
+    "licencesPerCompany": 30,
+    "cards": 60,
     "markers": {
-      "blue": { "qty": 1, "role": "shared year-track marker", "confidence": "high" },
-      "green": { "qty": 5, "role": null, "confidence": "unknown" },
-      "red": { "qty": 20, "role": null, "confidence": "unknown" }
+      "red":   { "qty": 20, "role": "nationalisation" },
+      "green": { "qty": 5,  "role": "partnership with the bank" },
+      "blue":  { "qty": 1,  "role": "game position on the track" }
     },
-    "cards": { "qty": 60, "composition": null, "confidence": "high/unknown-composition" },
     "cheques": {
-      "confidence": "low",
       "denominations": [
-        { "value": 1, "qty": 40 },
-        { "value": 5, "qty": 40 },
+        { "value": 1,  "qty": 40 },
+        { "value": 5,  "qty": 20 },
         { "value": 10, "qty": 20 },
-        { "value": 20, "qty": 80 },
+        { "value": 20, "qty": 60 },
         { "value": 50, "qty": 60 }
       ],
-      "totalPieces": 240,
-      "totalValue": 5040,
-      "contradiction": "One source states a 210 M total; itemised list gives 5040 M across 240 cheques. See RESEARCH.md §5.3."
-    },
-    "prospectingTowers": { "qty": 28, "confidence": "high" },
-    "oilTankers": { "qty": 5, "confidence": "high" },
-    "tankTrucks": { "qty": 5, "confidence": "high" },
-    "oilReservoirs": {
-      "confidence": "medium",
-      "sizes": [
-        { "size": "2MT", "qty": 9 },
-        { "size": "4MT", "qty": 9 },
-        { "size": "6MT", "qty": 8, "contradiction": "may be 9; see RESEARCH.md §5.2" }
-      ]
-    },
-    "gasReservoirs": { "qty": 9, "confidence": "medium" },
-    "licences": { "perCompany": 30, "total": 180, "confidence": "medium" }
+      "totalPieces": 200,
+      "totalValue": 4540
+    }
   },
 
   "setup": {
-    "confidence": "medium",
     "electBanker": true,
-    "deckSizeRule": {
-      "cardsPerPlayer": 10,
-      "confidence": "low",
-      "note": "Inferred by arithmetic from the sourced statement that all 60 cards are used only at 6 players."
-    },
-    "startingHandSize": { "value": 4, "confidence": "medium" },
-    "startingCapital": { "value": 200, "confidence": "high" },
-    "turnOrder": "clockwise"
+    "bankerGainsNoBenefit": true,
+    "startingHandSize": 4,
+    "startingCapital": 200,
+    "turnOrder": "clockwise",
+    "firstPlayer": "left of the banker",
+    "markerStartsOn": "passagem-de-ano",
+    "licencesAreBoughtNotDealt": true
   },
 
-  "developmentChain": {
-    "confidence": "high",
-    "note": "The most strongly and specifically attested rule in the corpus.",
-    "steps": [
-      { "order": 1, "action": "buyLicence", "target": "boardSquare", "from": "bank" },
-      { "order": 2, "action": "buyTower", "placeOn": "ownedLicence" },
-      { "order": 3, "action": "replaceTowerWithReservoir", "yields": ["oil", "gas"] },
-      { "order": 4, "action": "producesIncome", "from": "yearEndPayout" }
-    ],
-    "drillingResolution": {
-      "value": null,
-      "confidence": "unknown",
-      "blocks": "How reservoir size (2/4/6 MT) and oil-vs-gas are determined at step 3. Likely the game's principal luck element. NOT ASSUMED. Do not import King Oil's derrick mechanic as a substitute."
-    }
+  "deckComposition": {
+    "note": "Cards removed down to player count. Every column totals exactly 10 cards per player.",
+    "byPlayerCount": {
+      "6": { "torreOuLicenca": 14, "reservatorioGas": 9, "reservatorio6MT": 9, "reservatorio4MT": 9, "reservatorio2MT": 9, "petroleiro": 5, "camiaoCisterna": 5, "total": 60 },
+      "5": { "torreOuLicenca": 10, "reservatorioGas": 8, "reservatorio6MT": 8, "reservatorio4MT": 8, "reservatorio2MT": 8, "petroleiro": 4, "camiaoCisterna": 4, "total": 50 },
+      "4": { "torreOuLicenca": 8,  "reservatorioGas": 7, "reservatorio6MT": 7, "reservatorio4MT": 6, "reservatorio2MT": 6, "petroleiro": 3, "camiaoCisterna": 3, "total": 40 },
+      "3": { "torreOuLicenca": 8,  "reservatorioGas": 5, "reservatorio6MT": 5, "reservatorio4MT": 4, "reservatorio2MT": 4, "petroleiro": 2, "camiaoCisterna": 2, "total": 30 },
+      "2": { "torreOuLicenca": 8,  "reservatorioGas": 3, "reservatorio6MT": 3, "reservatorio4MT": 2, "reservatorio2MT": 2, "petroleiro": 1, "camiaoCisterna": 1, "total": 20 }
+    },
+    "moveValues": { "value": null, "confidence": "unknown", "blocks": "Each card is printed with the number of squares the blue marker advances. Not tabulated in the booklet; needs card photographs." }
   },
 
   "turn": {
-    "confidence": "medium",
     "usesDice": false,
     "perPlayerPawns": false,
-    "movement": {
-      "model": "sharedMarkerAdvancedByCardValue",
-      "marker": "blue",
-      "note": "Cards state both how many spaces the blue marker advances and what may be bought or negotiated."
-    },
     "sequence": [
-      "playOneCardFromHand",
-      "chooseOneOf: [ useCardPrivilege, sellCardPrivilegeToAnotherCompany ]",
-      "advanceBlueMarker",
-      "resolveSpaceAndAnyPassagemDeAnoCrossing",
-      "checkBankruptcyAndEndConditions",
-      "nextPlayerClockwise"
+      { "step": 1, "action": "resolveSpace", "note": "The space the blue marker occupies, where the PREVIOUS player's card left it." },
+      { "step": 2, "action": "drawCard", "from": "deck", "skipIfDeckEmpty": true },
+      { "step": 3, "action": "playCard", "to": "discardBesideDeck", "faceDown": true },
+      { "step": 4, "action": "resolveCard", "optional": true, "note": "Carried out only if able and willing." },
+      { "step": 5, "action": "advanceBlueMarker", "by": "playedCard.moveValue" }
     ],
-    "sellingACard": {
-      "buyerMayPlayItOnTheirTurn": true,
-      "confidence": "medium",
-      "priceRule": { "value": null, "confidence": "unknown" }
-    },
-    "handRefill": { "value": null, "confidence": "unknown", "note": "Strongly implied by the 'all 60 cards played' end condition, but not stated." },
-    "markerAdvancesOnSoldCard": { "value": null, "confidence": "unknown" }
+    "firstTurnException": "The first player places the marker on Passagem de Ano and does not resolve a space; they begin at step 2.",
+    "turnOrderNeverChanges": true,
+    "designNote": "Because a player resolves the space the previous player's card moved the marker to, the mover chooses where the NEXT player lands."
   },
 
-  "yearEndPayout": {
-    "confidence": "medium",
-    "trigger": "blue marker passes or lands on the 'Passagem de Ano' space (start of track)",
-    "paidTo": "allCompaniesSimultaneously",
-    "paidBy": "bank",
-    "note": "Structural analogue of Monopoly's 'pass GO', but pays every player, not only the mover.",
-    "amounts": {
-      "confidence": "low",
-      "oil6MT": 20,
-      "oil4MT": null,
-      "oil2MT": null,
-      "gasReservoir": 12,
-      "tankTruck": 5,
-      "oilTanker": { "value": 100, "confidence": "very-low", "warning": "Implausibly large vs. a 200 M starting capital and a 20 M oil field. Very likely garbled. Do not ship unverified. See RESEARCH.md §5.1." },
-      "prospectingTower": 0
-    }
+  "negotiation": {
+    "sellableWhenUnusable": true,
+    "anyCardType": true,
+    "multipleInterested": "auction (leilão) — highest bidder wins",
+    "buyerAlsoPaysBankListPrice": true,
+    "buyerPlaysCardOnOwnTurn": true,
+    "noBuyerAndUnusable": "right to the card is lost"
+  },
+
+  "developmentChain": [
+    { "order": 1, "action": "buyLicence", "terrain": ["land", "sea"] },
+    { "order": 2, "action": "buyTower", "placeOn": "ownedLicence" },
+    { "order": 3, "action": "returnTowerToBank", "replaceWith": ["oil2MT", "oil4MT", "oil6MT", "gas"], "requiresCard": true },
+    { "order": 4, "action": "earnsAtPassagemDeAno" }
+  ],
+  "licenceInExploration": "a licence bearing a tower OR a deposit",
+  "vehiclesNeedNoLicencePurchase": {
+    "applies": ["oilTanker", "tankTruck"],
+    "note": "A licence is placed under the vehicle purely to identify the owner; nothing is paid to the bank for it."
   },
 
   "prices": {
-    "confidence": "unknown",
-    "note": "BLOCKING GAP. No purchase price was recoverable from any source. Often printed on the board itself.",
-    "licence": null,
-    "tower": null,
-    "oil2MT": null,
-    "oil4MT": null,
-    "oil6MT": null,
-    "gasReservoir": null,
-    "oilTanker": null,
-    "tankTruck": null
+    "licenceLand": 7,
+    "licenceSea": 5,
+    "towerLand": 5,
+    "towerSea": 12,
+    "oil6MT": 10,
+    "oil4MT": 7,
+    "oil2MT": 5,
+    "gas": 6,
+    "tankTruck": 5,
+    "oilTanker": 300
   },
 
-  "taxesAndRoyalties": {
-    "confidence": "unknown",
-    "note": "Attested as present ('the country charges various taxes and grants royalties'). No rates, triggers or spaces recoverable.",
-    "rules": null
+  "annualProfits": {
+    "trigger": "blue marker passes or stops on Passagem de Ano",
+    "paidTo": "all companies",
+    "paidBy": "bank",
+    "amounts": {
+      "oil6MT": 20,
+      "oil4MT": 14,
+      "oil2MT": 10,
+      "gas": 12,
+      "tankTruck": 5,
+      "oilTanker": 100,
+      "tower": 0,
+      "licence": 0
+    },
+    "secondPassagemDeAno": {
+      "allowedAtPlayerCountAtMost": 4,
+      "location": "the opposite square bearing the same design",
+      "note": "Sanctioned by the booklet as an option, not a default."
+    }
+  },
+
+  "partnership": {
+    "appliesTo": "oilTanker",
+    "split": 0.5,
+    "note": "Always 50/50 in profits and losses; only the commanding licence directs operations.",
+    "forms": [
+      { "type": "solo",        "placement": "own licence in the porto, tanker on top" },
+      { "type": "withCompany", "placement": "two licences in the porto, yours on top of the partner's, tanker on both", "commandingLicence": "yours" },
+      { "type": "withBank",    "placement": "own licence in the porto, tanker on top, green marker beside it" }
+    ],
+    "partnerChoice": "if more than one company is interested, the buyer chooses; if none, deal with the bank",
+    "dissolution": "On your turn, offer to buy the partner's share or sell your own. If the partner declines you may sell your share to the bank: withdraw your licence and place a green marker. The ex-partner then partners with the bank."
+  },
+
+  "nationalisation": {
+    "marker": "red",
+    "effect": "halve all profits and losses",
+    "appliesTo": ["oilReservoirs", "gasReservoirs", "tankTrucks"],
+    "exempt": ["oilTankers"],
+    "appliesToFutureAcquisitions": true,
+    "scoringWhileNationalised": 0.5,
+    "clearedBy": "space 17 — Livre Empresa"
   },
 
   "board": {
-    "confidence": "unknown",
-    "note": "BLOCKING GAP. No board scan or photograph could be viewed. Nothing below is invented.",
-    "description": "An imaginary country divided into exploration zones on land and at sea. Each square requires a prospecting licence bought from the bank. A track carries the shared blue marker; its start space is 'Passagem de Ano'.",
-    "trackSpaceCount": null,
-    "trackSpaces": null,
-    "explorationZoneCount": null,
-    "explorationZones": null,
-    "landSeaSplit": null
+    "spaces": [
+      { "id": 1,  "name": "Passagem de Ano", "type": "income", "effect": "all companies collect annual profits" },
+      { "id": 2,  "name": "Duas licenças que não estavam em exploração foram confiscadas", "type": "penalty", "effect": "surrender two licences bearing neither tower nor deposit", "activeFromPassagemDeAnoCount": 3 },
+      { "id": 3,  "name": "Licença de exploração no mar", "type": "purchase", "buy": "licenceSea", "cost": 5, "optional": true },
+      { "id": 4,  "name": "Temporal — avaria num petroleiro", "type": "payBank", "amount": 50, "condition": "owns a tanker (payable by the partnership if shared)" },
+      { "id": 5,  "name": "Licença de exploração em terra", "type": "purchase", "buy": "licenceLand", "cost": 7, "optional": true },
+      { "id": 6,  "name": "Imposto sobre petróleo", "type": "payBankPerAsset", "perAsset": { "oil2MT": 2, "oil4MT": 4, "oil6MT": 6 } },
+      { "id": 7,  "name": "Compre uma torre de prospecção", "type": "purchase", "buy": "tower", "cost": { "land": 5, "sea": 12 }, "requires": "an owned licence", "optional": true },
+      { "id": 8,  "name": "Imposto de rendimento", "type": "payBankPerAsset", "perAsset": { "oil2MT": 1, "oil4MT": 2, "oil6MT": 3, "tankTruck": 1, "oilTanker": 10, "tower": 1 }, "plusPercentOfCash": 10, "roundingFavours": "bank", "note": "The 10% is levied on cash remaining AFTER the per-asset tax." },
+      { "id": 9,  "name": "Incêndio nos depósitos de petróleo", "type": "payBank", "amount": 5 },
+      { "id": 10, "name": "Temporal — grandes prejuízos numa torre", "type": "payBank", "amount": 4 },
+      { "id": 11, "name": "Imposto de gás", "type": "payBankPerAsset", "perAsset": { "gas": 4 } },
+      { "id": 12, "name": "Desastre com um camião cisterna", "type": "payBank", "amount": 3 },
+      { "id": 13, "name": "Nacionalização", "type": "nationalise" },
+      { "id": 14, "name": "Subida do preço do petróleo", "type": "receiveFromBankPerAsset", "perAsset": { "oil2MT": 4, "oil4MT": 8, "oil6MT": 12 } },
+      { "id": 15, "name": "Incêndio num poço", "type": "payBank", "amount": 4, "condition": "holds at least one licence with a tower" },
+      { "id": 16, "name": "Poço seco", "type": "forfeit", "effect": "surrender one exploration licence and its tower to the bank", "condition": "owns a tower; otherwise nothing is owed" },
+      { "id": 17, "name": "Livre empresa", "type": "denationalise" },
+      { "id": 18, "name": "Incêndio num depósito de gás", "type": "payBank", "amount": 5 },
+      { "id": 19, "name": "Baixa de preço do petróleo", "type": "payBankPerAsset", "perAsset": { "oil2MT": 2, "oil4MT": 4, "oil6MT": 6 } },
+      { "id": 20, "name": "A sua conveniência", "type": "chooseAnySpace", "range": [1, 19] }
+    ],
+    "track": { "value": null, "confidence": "unknown", "blocks": "Physical square count around the map and which space type occupies each, plus which square sits opposite Passagem de Ano. Needs a board scan." },
+    "map": { "value": null, "confidence": "unknown", "blocks": "Count and arrangement of land vs sea prospecting squares; position of the porto and the zona industrial. Needs a board scan." },
+    "markerDirection": "always around the map in the direction of the arrow"
+  },
+
+  "openingSpecialRule": {
+    "name": "duplicar",
+    "effect": "the first time a player lands on space 3 or 5 they may buy two licences of that type instead of one",
+    "oncePerPlayer": true,
+    "onlyAtGameStart": true,
+    "forfeitedIfNotClaimedImmediately": true
   },
 
   "bankruptcy": {
-    "confidence": "medium",
     "trigger": "player runs out of money",
-    "effect": "player leaves the game; banker removes all that company's assets from the board",
-    "loansOrMortgages": { "value": false, "confidence": "low", "note": "No source mentions any; absence of evidence only." }
+    "effect": "player abandons the game; banker removes all that company's assets from the board"
+  },
+
+  "bankShortfall": {
+    "mayBorrowFromPlayers": true,
+    "interestPaidImmediately": 0.10
   },
 
   "endOfGame": {
-    "confidence": "medium",
-    "conditions": [
-      { "id": "deckExhausted", "rule": "all 60 cards have been played", "primary": true },
-      { "id": "soleSurvivor", "rule": "only one player remains solvent", "primary": false }
-    ],
+    "condition": "every player has taken exactly 10 turns (deck exhausted, then hands played out)",
     "scoring": {
       "rule": "greatest total capital wins",
       "countsTowards": ["prospectingTowers", "oilReservoirs", "gasReservoirs", "oilTankers", "tankTrucks", "cheques"],
-      "licencesCounted": { "value": null, "confidence": "unknown", "note": "Licences are not named in the sourced tally; unclear whether deliberate." },
-      "note": "Capital-accumulation scoring with elimination as a side effect — the inverse of Monopoly's last-player-standing."
+      "assetValuation": "fixed purchase price as listed in prices",
+      "licencesHaveNoValue": true,
+      "nationalisedCompanyCountsHalf": true
     }
   },
 
   "ruleCoverageMatrix": [
-    { "rule": "Identity / player count / duration", "sourceConfidence": "high",    "implemented": false, "tested": false },
-    { "rule": "Component inventory",               "sourceConfidence": "medium",  "implemented": false, "tested": false },
-    { "rule": "Companies",                          "sourceConfidence": "high",    "implemented": false, "tested": false },
-    { "rule": "Starting capital (200 M)",           "sourceConfidence": "high",    "implemented": false, "tested": false },
-    { "rule": "Deal 4 cards, elect banker",         "sourceConfidence": "medium",  "implemented": false, "tested": false },
-    { "rule": "Deck scales 10 cards/player",        "sourceConfidence": "low",     "implemented": false, "tested": false },
-    { "rule": "Development chain licence→tower→reservoir", "sourceConfidence": "high", "implemented": false, "tested": false },
-    { "rule": "Card-driven shared-marker movement", "sourceConfidence": "medium",  "implemented": false, "tested": false },
-    { "rule": "Use-or-sell card privilege",         "sourceConfidence": "medium",  "implemented": false, "tested": false },
-    { "rule": "Passagem de Ano pays all players",   "sourceConfidence": "medium",  "implemented": false, "tested": false },
-    { "rule": "Year-end payout amounts",            "sourceConfidence": "low",     "implemented": false, "tested": false },
-    { "rule": "Bankruptcy and asset removal",       "sourceConfidence": "medium",  "implemented": false, "tested": false },
-    { "rule": "End of game and scoring",            "sourceConfidence": "medium",  "implemented": false, "tested": false },
-    { "rule": "Board layout",                       "sourceConfidence": "unknown", "implemented": false, "tested": false },
-    { "rule": "Card deck composition",              "sourceConfidence": "unknown", "implemented": false, "tested": false },
-    { "rule": "Purchase price table",               "sourceConfidence": "unknown", "implemented": false, "tested": false },
-    { "rule": "Drilling resolution",                "sourceConfidence": "unknown", "implemented": false, "tested": false },
-    { "rule": "Green / red marker function",        "sourceConfidence": "unknown", "implemented": false, "tested": false },
-    { "rule": "Taxes and royalties",                "sourceConfidence": "unknown", "implemented": false, "tested": false }
+    { "rule": "Identity, player count, duration",      "sourceConfidence": "high",    "implemented": false, "tested": false },
+    { "rule": "Component inventory",                    "sourceConfidence": "high",    "implemented": false, "tested": false },
+    { "rule": "Setup, banker, starting capital",        "sourceConfidence": "high",    "implemented": false, "tested": false },
+    { "rule": "Deck composition by player count",       "sourceConfidence": "high",    "implemented": false, "tested": false },
+    { "rule": "Turn sequence (resolve/draw/play/move)", "sourceConfidence": "high",    "implemented": false, "tested": false },
+    { "rule": "Card negotiation and auction",           "sourceConfidence": "high",    "implemented": false, "tested": false },
+    { "rule": "Development chain",                      "sourceConfidence": "high",    "implemented": false, "tested": false },
+    { "rule": "Price table",                            "sourceConfidence": "high",    "implemented": false, "tested": false },
+    { "rule": "Annual profits at Passagem de Ano",      "sourceConfidence": "high",    "implemented": false, "tested": false },
+    { "rule": "Second Passagem de Ano at <=4 players",  "sourceConfidence": "high",    "implemented": false, "tested": false },
+    { "rule": "Tanker partnership and dissolution",     "sourceConfidence": "high",    "implemented": false, "tested": false },
+    { "rule": "Nationalisation / Livre Empresa",        "sourceConfidence": "high",    "implemented": false, "tested": false },
+    { "rule": "All 20 board space effects",             "sourceConfidence": "high",    "implemented": false, "tested": false },
+    { "rule": "Opening duplicate-licence rule",         "sourceConfidence": "high",    "implemented": false, "tested": false },
+    { "rule": "Bankruptcy and bank borrowing",          "sourceConfidence": "high",    "implemented": false, "tested": false },
+    { "rule": "End of game and scoring",                "sourceConfidence": "high",    "implemented": false, "tested": false },
+    { "rule": "Track layout (square order)",            "sourceConfidence": "unknown", "implemented": false, "tested": false },
+    { "rule": "Map geography (land/sea, porto, zona industrial)", "sourceConfidence": "unknown", "implemented": false, "tested": false },
+    { "rule": "Per-card move values",                   "sourceConfidence": "unknown", "implemented": false, "tested": false }
   ]
 }

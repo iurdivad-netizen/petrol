@@ -1,11 +1,14 @@
 # PETRÓLEO (Karto, 1976) — Phase 1 Research Dossier
 
-**Status:** Research incomplete. Implementation of the board layout, price table and card
-deck is **blocked** pending primary sources (see §6).
-**Compiled:** 2026-09-14
-**Method:** Web search only. Every candidate source domain was unreachable from the build
-environment (see §0), so all evidence below is second-hand: search-engine summaries of
-pages that could not be opened and verified directly.
+> **SUPERSEDED for rules purposes — retained as a record.**
+> The original Karto rules booklet was subsequently supplied by the project owner and
+> transcribed. **[docs/RULES.md](RULES.md) is now the authoritative rules reference**, and
+> `data/petroleo.rules.json` the machine-readable source of truth.
+>
+> This dossier records what could be established *before* the booklet arrived, and how
+> reliable web-only reconstruction turned out to be. See §10 for the scorecard: of the
+> three numeric contradictions flagged here, one was a real value I wrongly doubted, one
+> was a genuine transcription error, and one was wrong in a way no source had revealed.
 
 ---
 
@@ -297,3 +300,47 @@ Implementation policy for this project: reproduce structure and mechanics exactl
 recreate all artwork originally in period style; keep company identities configurable in
 data so the shipped build can use the historical six for fidelity while allowing a
 trademark-free set to be swapped in.
+
+
+---
+
+## 10. Scorecard — how web-only reconstruction fared
+
+Checked against the original booklet. Recorded because it calibrates how much to trust
+this method next time.
+
+**Correct:**
+
+- Publisher, city, year, 2–6 players, ~50 min, ages 8+.
+- Kartolândia, Banco da Kartolândia, the six companies, elected banker.
+- 200 M starting capital; deal 4 cards; 10 cards per player (the inferred divisor was right).
+- The licence → tower → reservoir development chain, including that only step 3 earns.
+- Card-driven movement of a single shared blue marker; cards carry both a move value and a
+  privilege; play-or-sell with the buyer playing it on their own turn.
+- *Passagem de Ano* pays **all** companies.
+- Bankruptcy elimination with asset removal; scoring by greatest total capital over
+  towers + reservoirs + tankers + trucks + cheques.
+- 28 towers, 5 tankers, 5 trucks, 9 gas reservoirs, 30 licences per company, 60 cards,
+  20 red / 5 green / 1 blue marker.
+- The judgement in §7 that this is **not** a roll-and-move Monopoly clone, and that King
+  Oil's derrick mechanic must not be imported. Both held up.
+
+**Wrong or misleading:**
+
+| Claim | Reality |
+| --- | --- |
+| §5.1 — the 100 M tanker payout is "implausible, very likely garbled" | **The figure was correct.** The missing context was the price: a tanker costs 300 M. Flagging it was right; doubting the number was wrong. |
+| §5.2 — 8 × 6 MT reservoirs | **9.** The booklet gives 9/9/9 oil + 9 gas = 36, confirming the "36 reservoirs" reading. |
+| §5.3 — cheques 40/40/20/80/60, 240 pieces, 5,040 M | **40/20/20/60/60, 200 pieces, 4,540 M.** The itemised list I judged "more credible" was itself wrong; only the rejection of the 210 M figure was right. |
+| End condition "all 60 cards played" | True but imprecise: play continues until hands are exhausted — **exactly 10 turns each**. |
+| "Only one player remains solvent" as an end condition | Not stated as one. Bankruptcy removes a player; the game still ends on turn count. |
+
+**Entirely unknown until the booklet arrived** — roughly half the rule surface, exactly as
+§6 predicted: the 20 board spaces and every one of their effects, the whole price table,
+the deck composition table, the nationalisation subsystem (red markers), the tanker
+partnership subsystem (green markers), the income-tax 10% cash levy, the opening
+duplicate-licence rule, bank borrowing at 10%, and that licences score zero.
+
+**Method verdict:** search-summary reconstruction reliably recovered *structure* and got
+the design character right, but was unreliable on *numbers* and blind to entire subsystems.
+Declining to implement on it was the correct call.

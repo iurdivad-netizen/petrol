@@ -6,61 +6,59 @@ oil-industry board game by the defunct Porto publisher **Karto**.
 The governing principle is fidelity, not reinterpretation:
 **original rules > historical accuracy > gameplay fidelity > visual fidelity > modern convenience.**
 
-## Current status — Phase 1 (Research), blocked
+## Current status — rules complete, board layout outstanding
 
 | Phase | State |
 | --- | --- |
-| 1. Research | **Partially complete — blocked** |
-| 2. Specification | Partially drafted (`data/petroleo.rules.json`) |
-| 3–8. Prototype → Deployment | Not started, and deliberately so |
+| 1. Research | **Complete** — original Karto rules booklet obtained and transcribed |
+| 2. Specification | **Complete** for rules — `docs/RULES.md`, `data/petroleo.rules.json` |
+| 3. Prototype | Next |
+| 4–8. Full rules → Deployment | Not started |
 
-### Why implementation has not started
+The original 9-page Karto rules booklet (*"PETRÓLEO" — REGRAS*, Fábrica de Jogos Karto,
+Rua Delfim Ferreira 698, Porto) has been read in full. Every rule, price, income figure,
+board-space effect and the deck composition table are now verified from the primary source.
+Arithmetic cross-checks pass: the deck table totals exactly 10 cards per player at every
+player count, and the cheque denominations total 200 pieces / 4,540 M Kartos.
 
-Roughly half the implementable rule surface — **the board layout, the 60-card deck
-composition, and the entire purchase price table** — could not be evidenced. The build
-environment's egress policy blocks every source domain (BoardGameGeek, Ludopedia, Só Jogo,
-Jogopédia, the Blogspot collector archives, the Internet Archive, and the host of a
-digitised *LIVRO DE REGRAS* PDF that is almost certainly the complete rulebook). All
-returned `CONNECT tunnel failed, response 403` on direct probe.
+### What the game actually is
 
-Building the board and economy now would mean **inventing them**, which is the one thing
-this project forbids. Everything that *is* evidenced has been recorded instead, with the
-gaps marked explicitly rather than papered over.
+Not the Monopoly clone every collector source calls it. There are **no dice and no
+per-player pawns**. One shared blue marker circles the map, advanced by a value printed on
+the card each player plays — so **the space you resolve was chosen by the previous
+player's card, not your own**. Every player takes exactly 10 turns; richest company wins.
 
-See **[docs/RESEARCH.md](docs/RESEARCH.md)** for the full dossier, the confidence table,
-the three numeric contradictions found in the sources, and the ordered blocking list.
+The economic core is a strict development chain — buy an exploration licence, place a
+prospecting tower on it, then trade the tower for an oil or gas deposit — with income paid
+to *everyone* each time the marker crosses *Passagem de Ano*. Around that sit two
+subsystems no secondary source had even mentioned: **nationalisation** (red markers halve
+all your profits and losses until *Livre Empresa* frees you) and **tanker partnerships**
+(green markers; 50/50 ventures with a rival or with the bank, dissolvable on your turn).
+Cards you cannot use are **auctioned** to rivals, who then play them on their own turn.
 
-### What is established
+See **[docs/RULES.md](docs/RULES.md)** for the full reconstructed ruleset.
 
-- Karto, Porto, 1976; 2–6 players; ~50 minutes; ages 8+.
-- Setting: *Kartolândia*, an imaginary petro-state; players run CEPSA, ESSO, GALP, MOBIL,
-  SHELL or TOTAL; all business flows through the *Banco da Kartolândia*.
-- **No dice, no per-player pawns.** A single shared blue marker advances around a track by
-  values printed on the cards. Despite universal collector shorthand, this is *not* a
-  Monopoly-style roll-and-move game — see RESEARCH.md §7.
-- **Development chain (high confidence):** buy a prospecting licence → buy a tower and
-  place it on the licence → replace the tower with an oil or gas reservoir → only then
-  does the square earn.
-- **Passagem de Ano:** when the blue marker passes or lands on the start space, the bank
-  pays annual profits to *every* company at once.
-- Cards are played to exercise a privilege **or sold** to a rival, who may then play it.
-- Bankruptcy eliminates a player and clears their assets. The game ends when all 60 cards
-  are played; the greatest total capital wins.
+### Still needed — the board and the cards
 
-### What unblocks it
+Three things are printed on components rather than in the booklet:
 
-Any one of the following closes most of the gap:
+1. **Track layout** — how many physical squares surround the map, which of the 20 space
+   types sits on each, and which square is opposite *Passagem de Ano* (needed for the
+   second-payout rule at ≤4 players).
+2. **Map geography** — the count and arrangement of land vs sea prospecting squares, and
+   where the *porto* and *zona industrial* sit.
+3. **Per-card move values** — the number of squares each of the 60 cards advances the
+   marker.
 
-1. The *LIVRO DE REGRAS* PDF, or a scan/photo of the original Karto rules booklet.
-2. A clear photograph or scan of the board (prices are commonly printed on the board
-   itself, which would close gaps #1 and #3 together).
-3. Photographs of the cards.
-4. Egress access to the source domains listed in `docs/RESEARCH.md` §8.
+A legible board scan closes 1 and 2; card photographs close 3.
 
 ## Repository layout
 
 ```
-docs/RESEARCH.md            Phase 1 dossier: evidence, confidence, contradictions, gaps
+docs/RULES.md               Authoritative reconstructed ruleset, verified against the
+                            original Karto rules booklet
+docs/RESEARCH.md            Phase 1 dossier (superseded for rules; retains the
+                            web-only reconstruction scorecard)
 data/petroleo.rules.json    Machine-readable reconstructed ruleset (versioned).
                             `null` + confidence "unknown" means NOT EVIDENCED — the
                             engine must refuse to start rather than substitute a default.
