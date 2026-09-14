@@ -209,8 +209,8 @@ h1, h2, h3 { margin: 0 0 8px; letter-spacing: 0.04em; }
   font-size: 11px;
   cursor: pointer;
   display: grid;
-  grid-template-columns: 16px 1fr 16px;
-  gap: 2px;
+  grid-template-columns: 22px 1fr 22px;
+  gap: 3px;
   text-align: center;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   transition: transform 0.12s ease;
@@ -220,15 +220,18 @@ h1, h2, h3 { margin: 0 0 8px; letter-spacing: 0.04em; }
 
 .card .edge {
   writing-mode: vertical-rl;
-  font-size: 8px;
+  font-size: 7px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #4a4a4a;
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
 }
 .card .edge.right { transform: rotate(180deg); }
 .card .body {
@@ -248,13 +251,16 @@ h1, h2, h3 { margin: 0 0 8px; letter-spacing: 0.04em; }
   letter-spacing: 0.02em;
 }
 .card .pip {
-  display: inline-grid;
+  display: grid;
   place-items: center;
-  width: 16px; height: 16px;
+  flex: 0 0 auto;
+  width: 15px; height: 15px;
   border: 1px solid #4a4a4a;
   border-radius: 50%;
   font-size: 9px;
+  font-weight: 700;
   writing-mode: horizontal-tb;
+  text-orientation: upright;
 }
 
 /* --------------------------------------------------------------- actions */

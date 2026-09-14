@@ -22,7 +22,7 @@ const SAVE_KEY = 'petroleo-karto-1976-save';
 
 /** Short type names for the card's edge tab, as printed on the original. */
 const SHORT_TYPE: Record<string, string> = {
-  torreOuLicenca: 'Torre/Licença',
+  torreOuLicenca: 'Torre/Lic.',
   reservatorioGas: 'Gás',
   reservatorio6MT: '6 M.T.',
   reservatorio4MT: '4 M.T.',
