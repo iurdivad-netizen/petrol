@@ -16,7 +16,7 @@ describe('deck composition (RULES.md §4)', () => {
     it(`${count} players: exactly ${count * CARDS_PER_PLAYER} cards`, () => {
       const total = Object.values(DECK_COMPOSITION[count]!).reduce((a, b) => a + b, 0);
       expect(total).toBe(count * CARDS_PER_PLAYER);
-      expect(buildDeck(count)).toHaveLength(count * CARDS_PER_PLAYER);
+      expect(buildDeck(count, 1).cards).toHaveLength(count * CARDS_PER_PLAYER);
     });
     it(`${count} players: matches the canonical JSON`, () => {
       const row = json.deckComposition.byPlayerCount[String(count)];

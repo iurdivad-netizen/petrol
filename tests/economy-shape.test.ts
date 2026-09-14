@@ -55,13 +55,41 @@ describe('reconstructed move values (src/data/board.ts)', () => {
     expect(camioes.map((c) => c.move)).toContain(7);
   });
 
+  it('uses the whole printed deck at six players, removing nothing', () => {
+    const full = fullDeck();
+    const six = buildDeck(6, 1).cards;
+    expect(six).toHaveLength(full.length);
+    expect(six.map((c) => c.id).sort()).toEqual(full.map((c) => c.id).sort());
+  });
+
+  it('removes surplus cards without biasing the deck toward slow or fast play', () => {
+    // Removal is arbitrary, so the mean must be unbiased across seeds rather
+    // than fixed. Variance grows as more cards are removed, which is why a
+    // two-player game varies in tempo and a six-player game cannot.
+    for (const n of [2, 3, 4, 5]) {
+      let total = 0;
+      const runs = 60;
+      for (let seed = 1; seed <= runs; seed++) {
+        const d = buildDeck(n, seed).cards;
+        total += d.reduce((a, c) => a + c.move, 0) / d.length;
+      }
+      const mean = total / runs;
+      expect(mean, `${n} players: mean move ${mean.toFixed(2)}`).toBeGreaterThan(4.7);
+      expect(mean, `${n} players: mean move ${mean.toFixed(2)}`).toBeLessThan(5.3);
+    }
+  });
+
   it('holds the mean steady as the deck is trimmed to the player count', () => {
     // Regression: trimming by prefix kept only the lowest-numbered cards, which
     // at two players left a mean move of ~2. The marker never completed a lap
     // and no company was ever paid.
     for (const n of [2, 3, 4, 5, 6]) {
-      const deck = buildDeck(n);
-      const mean = deck.reduce((a, c) => a + c.move, 0) / deck.length;
+      let total = 0;
+      for (let seed = 1; seed <= 30; seed++) {
+        const deck = buildDeck(n, seed).cards;
+        total += deck.reduce((a, c) => a + c.move, 0) / deck.length;
+      }
+      const mean = total / 30;
       expect(mean, `${n} players`).toBeGreaterThan(4);
       expect(mean, `${n} players`).toBeLessThan(6);
     }

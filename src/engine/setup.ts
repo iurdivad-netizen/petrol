@@ -57,36 +57,34 @@ export function fullDeck(): Card[] {
  * the per-type counts from the table out of the physical deck rather than
  * printing a different deck per player count.
  */
-/** Takes `count` items spread evenly across `items`, endpoints included. */
-function pickSpread<T>(items: readonly T[], count: number): T[] {
-  if (count >= items.length) return items.slice();
-  if (count <= 1) return items.length ? [items[Math.floor(items.length / 2)] as T] : [];
-  return Array.from(
-    { length: count },
-    (_, i) => items[Math.round((i * (items.length - 1)) / (count - 1))] as T,
-  );
-}
-
-export function buildDeck(playerCount: number): Card[] {
+export function buildDeck(playerCount: number, seed: number): { cards: Card[]; state: number } {
   const composition = DECK_COMPOSITION[playerCount];
   if (!composition) throw new Error(`No deck composition for ${playerCount} players`);
 
   const all = fullDeck();
   const cards: Card[] = [];
+  let state = seed;
+
+  // Which surplus cards the banker removes is arbitrary, so removal is random
+  // within each type rather than a tidy selection. Taking a prefix kept only
+  // the lowest-numbered cards — at two players the deck averaged a move of 2,
+  // the marker never completed a lap, and no company was ever paid. Taking an
+  // evenly spread subset fixed the mean but left an unnatural bimodal spread,
+  // heavy at 1 and 9 and thin between. Random removal preserves the shape of
+  // the distribution and gives each game its own tempo, which is what shuffling
+  // sixty cards and dealing out the surplus actually does.
   for (const [type, qty] of Object.entries(composition) as [CardType, number][]) {
     const ofType = all.filter((c) => c.type === type);
-    // Spread the kept cards across the type's move values instead of taking the
-    // first few. Taking a prefix would keep only the lowest numbers, which at
-    // two players left a deck averaging a move of 2 — the marker never
-    // completed a lap and no company was ever paid.
-    cards.push(...pickSpread(ofType, qty));
+    const shuffled = shuffle(ofType, state);
+    state = shuffled.state;
+    cards.push(...shuffled.items.slice(0, qty));
   }
 
   const expected = playerCount * CARDS_PER_PLAYER;
   if (cards.length !== expected) {
     throw new Error(`Deck for ${playerCount} players is ${cards.length} cards, expected ${expected}`);
   }
-  return cards;
+  return { cards, state };
 }
 
 export function createGame(options: NewGameOptions = {}): GameState {
@@ -96,7 +94,9 @@ export function createGame(options: NewGameOptions = {}): GameState {
 
   let rngState = options.seed ?? 0x9e3779b9;
 
-  const shuffled = shuffle(buildDeck(count), rngState);
+  const built = buildDeck(count, rngState);
+  rngState = built.state;
+  const shuffled = shuffle(built.cards, rngState);
   rngState = shuffled.state;
   const deck = shuffled.items;
 

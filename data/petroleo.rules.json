@@ -187,6 +187,11 @@
           "move": 7
         }
       ]
+    },
+    "removal": {
+      "rule": "shuffle all 60 and remove the surplus down to the player-count table; always 10 cards per player",
+      "whichCardsRemoved": "unspecified by the booklet, therefore arbitrary",
+      "consequence": "the deck in play varies between games below six players; at six players nothing is removed and the deck is always the full printed 60"
     }
   },
   "turn": {
