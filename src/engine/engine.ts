@@ -40,6 +40,28 @@ function trackSpace(index: number): number {
   return cell ? cell.space : 1;
 }
 
+/**
+ * Whose input the game is actually waiting on.
+ *
+ * Usually the current player, but an auction runs out of turn: the game waits
+ * on the next bidder, not on the company that put the card up. Both the AI
+ * driver and the interface must agree on this, or one waits for the other —
+ * which deadlocked the game whenever a computer company offered a card and a
+ * human had to bid on it.
+ */
+export function actingPlayer(state: GameState): PlayerId {
+  if (state.phase === 'auction' && state.auction) {
+    const bidder = state.auction.awaiting[0];
+    if (bidder !== undefined) return bidder;
+  }
+  return state.currentPlayer;
+}
+
+/** True when there is anyone left who could buy a card put up for sale. */
+export function canAuction(state: GameState): boolean {
+  return livePlayers(state).some((id) => id !== state.currentPlayer);
+}
+
 function livePlayers(state: GameState): PlayerId[] {
   return state.players.filter((p) => !p.bankrupt).map((p) => p.id);
 }
@@ -336,6 +358,10 @@ export function applyAction(state: GameState, action: Action): ActionResult {
       if (others.length === 0) return fail('Ninguém a quem vender.');
       state.auction = { card, sellerId: id, bids: {}, awaiting: others };
       state.phase = 'auction';
+      // The decision that produced the card is over — the game is now waiting
+      // on bids. Leaving it set made the interface keep rendering the old
+      // controls instead of the auction, with no way to bid or pass.
+      state.pending = { kind: 'none' };
       log(state, id, `Colocou ${CARD_NAMES[card.type]} em leilão.`);
       return ok;
     }

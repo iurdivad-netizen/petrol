@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { createGame } from '../src/engine/setup';
-import { applyAction } from '../src/engine/engine';
+import { actingPlayer, applyAction, canAuction } from '../src/engine/engine';
 import { AI_LEVELS, aiAction, spaceValueFor, yearsRemaining } from '../src/engine/ai';
 import { scoreboard } from '../src/engine/scoring';
 import type { AiConfig } from '../src/engine/ai';
@@ -122,5 +122,89 @@ describe('skill actually correlates with winning', () => {
     }
     // A strategy that cannot out-earn near-random play is not a strategy.
     expect(strong, `strong ${strong} vs weak ${weak}`).toBeGreaterThan(weak);
+  });
+});
+
+describe('auctions do not deadlock between the AI and a human', () => {
+  /** Sets up a computer company offering a card it cannot use. */
+  function aiOffersCard(): GameState {
+    const s = createGame({ playerCount: 3, seed: 11, aiPlayers: [1, 2] });
+    s.currentPlayer = 1;
+    const site = s.sites.find((x) => x.terrain === 'land')!;
+    site.ownerId = 1;
+    site.tower = true;
+    s.players[1]!.cash = 2; // cannot afford the deposit, so it sells the card
+    s.phase = 'resolveCard';
+    s.discard.push({ id: 'x', type: 'reservatorio6MT', move: 4 });
+    s.pending = { kind: 'placeDeposit', deposit: 'oil6MT' };
+    return s;
+  }
+
+  it('waits on the bidder, not on the company that offered the card', () => {
+    // Regression: the interface asked whether the CURRENT player was a computer
+    // and showed "thinking" if so. During an auction that is the seller, not the
+    // bidder — so an AI offering a card to a human hung the game: the interface
+    // waited for the AI, the AI waited for the human, and the human had no
+    // button to press.
+    const s = aiOffersCard();
+    const offer = aiAction(s, AI_LEVELS.magnata!);
+    expect(offer?.type).toBe('offerCard');
+    applyAction(s, offer!);
+
+    expect(s.phase).toBe('auction');
+    // The decision that produced the card is over; only bids remain.
+    expect(s.pending.kind).toBe('none');
+    expect(s.currentPlayer).toBe(1);
+    expect(s.players[s.currentPlayer]!.isAi).toBe(true);
+
+    // The game is waiting on the human bidder, and says so.
+    expect(actingPlayer(s)).toBe(0);
+    expect(s.players[actingPlayer(s)]!.isAi).toBe(false);
+    // So the AI driver correctly stands down and the interface must show controls.
+    expect(aiAction(s, AI_LEVELS.magnata!)).toBeNull();
+  });
+
+  it('hands back to the AI once the human has bid', () => {
+    const s = aiOffersCard();
+    applyAction(s, aiAction(s, AI_LEVELS.magnata!)!);
+    applyAction(s, { type: 'passBid', playerId: 0 });
+    // Seat 2 is a computer, so the AI takes over again.
+    expect(actingPlayer(s)).toBe(2);
+    expect(aiAction(s, AI_LEVELS.magnata!)).not.toBeNull();
+  });
+
+  it('never offers a card when there is no one left to buy it', () => {
+    // offerCard is refused with no rivals, and a refused action stalls the AI.
+    const s = createGame({ playerCount: 2, seed: 12, aiPlayers: [0, 1] });
+    s.players[1]!.bankrupt = true;
+    s.currentPlayer = 0;
+    const site = s.sites.find((x) => x.terrain === 'land')!;
+    site.ownerId = 0;
+    site.tower = true;
+    s.players[0]!.cash = 2;
+    s.phase = 'resolveCard';
+    s.discard.push({ id: 'y', type: 'reservatorio6MT', move: 4 });
+    s.pending = { kind: 'placeDeposit', deposit: 'oil6MT' };
+
+    expect(canAuction(s)).toBe(false);
+    const action = aiAction(s, AI_LEVELS.magnata!)!;
+    expect(action.type).toBe('skipCard');
+    expect(applyAction(s, action).ok).toBe(true);
+  });
+
+  it('every action the AI proposes is accepted, across many mixed games', () => {
+    // The broadest guard against a stall: a refused action means the AI has
+    // nothing else to try and the game stops.
+    for (let seed = 1; seed <= 25; seed++) {
+      const s = createGame({ playerCount: 4, seed, aiPlayers: [0, 1, 2, 3] });
+      let guard = 0;
+      while (s.phase !== 'gameOver' && guard++ < 20000) {
+        const action = aiAction(s, AI_LEVELS.magnata!);
+        expect(action, `seed ${seed}: AI had no action at phase ${s.phase}`).not.toBeNull();
+        const r = applyAction(s, action!);
+        expect(r.ok, `seed ${seed}: ${JSON.stringify(action)} refused — ${r.error}`).toBe(true);
+      }
+      expect(s.phase).toBe('gameOver');
+    }
   });
 });

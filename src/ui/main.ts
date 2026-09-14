@@ -7,7 +7,7 @@
  * without rendering anything.
  */
 
-import { applyAction, canUseCard } from '../engine/engine';
+import { actingPlayer, applyAction, canUseCard } from '../engine/engine';
 import { createGame } from '../engine/setup';
 import { scoreboard } from '../engine/scoring';
 import { tally } from '../engine/economy';
@@ -366,22 +366,29 @@ function onSiteClick(site: Site): void {
 }
 
 /** Buttons appropriate to the current phase and pending decision. */
+const actorOf = (s: GameState) => actingPlayer(s);
+
 function controls(s: GameState): HTMLElement {
   const wrap = el('div', 'panel');
   const p = s.players[s.currentPlayer]!;
   const pending = s.pending;
 
   const heading = el('div', 'turn-head');
-  heading.appendChild(el('h3', undefined, `Vez de ${p.company}${p.isAi ? ' (automática)' : ''}`));
+  heading.appendChild(el('h3', undefined,
+    s.phase === 'auction' && actorOf(s) !== p.id
+      ? `Leilão — lance de ${s.players[actorOf(s)]?.company}`
+      : `Vez de ${p.company}${p.isAi ? ' (automática)' : ''}`));
   heading.appendChild(button('Regras', () => openRules(s.players.length), 'secondary'));
   wrap.appendChild(heading);
 
-  const waitingOnAi =
-    p.isAi || (s.phase === 'auction' && s.auction && s.players[s.auction.awaiting[0] ?? -1]?.isAi);
-  if (waitingOnAi && s.phase !== 'gameOver') {
+  // Who the game is waiting on — the bidder during an auction, not the seller.
+  const actor = s.players[actingPlayer(s)];
+  if (actor?.isAi && s.phase !== 'gameOver') {
     const thinking = el('div', 'prompt thinking');
     thinking.textContent =
-      `${p.company} está a jogar — restam cerca de ${yearsRemaining(s).toFixed(1)} anos de lucros.`;
+      s.phase === 'auction'
+        ? `${actor.company} está a decidir o lance…`
+        : `${actor.company} está a jogar — restam cerca de ${yearsRemaining(s).toFixed(1)} anos de lucros.`;
     wrap.appendChild(thinking);
     return wrap;
   }

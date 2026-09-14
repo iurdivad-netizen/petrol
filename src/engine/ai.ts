@@ -30,6 +30,7 @@
 import { PASSAGEM_INDEX, SECOND_PASSAGEM_INDEX, TRACK } from '../data/board';
 import { ANNUAL_PROFIT, PRICES, SPACE_TARIFFS, SPACE_FLAT_COST } from '../data/rules';
 import type { Action } from './actions';
+import { actingPlayer, canAuction } from './engine';
 import { annualProfitFor, tally } from './economy';
 import { idleLicences, toweredSites } from './spaces';
 import type { DepositKind, GameState, PlayerId, Site } from './types';
@@ -154,6 +155,11 @@ function bestTowerSite(state: GameState, id: PlayerId): Site | undefined {
 
 // --------------------------------------------------------------- card choice
 
+/** Put the card up for sale, or forfeit it when there is no one to sell to. */
+function sellOrSkip(state: GameState): Action {
+  return canAuction(state) ? { type: 'offerCard' } : { type: 'skipCard' };
+}
+
 interface CardChoice {
   cardId: string;
   score: number;
@@ -195,17 +201,17 @@ function scoreCard(state: GameState, cardMove: number, ownValue: number): number
  * bid. Returns null when no AI is on the clock.
  */
 export function aiAction(state: GameState, config: AiConfig = AI_LEVELS.magnata!): Action | null {
-  // Auctions run out of turn: answer for whichever AI is being asked to bid.
+  if (state.phase === 'gameOver') return null;
+
+  // Auctions run out of turn: the game waits on the bidder, not the seller.
+  const actor = state.players[actingPlayer(state)];
+  if (!actor?.isAi) return null;
   if (state.phase === 'auction' && state.auction) {
-    const bidder = state.auction.awaiting[0];
-    if (bidder === undefined) return null;
-    const bp = state.players[bidder];
-    if (!bp?.isAi) return null;
-    return auctionBid(state, bidder, config);
+    return auctionBid(state, actor.id, config);
   }
 
   const me = state.players[state.currentPlayer];
-  if (!me?.isAi || state.phase === 'gameOver') return null;
+  if (!me?.isAi) return null;
 
   const years = yearsRemaining(state);
   const roll = () => Math.random() > config.skill;
@@ -266,7 +272,7 @@ export function aiAction(state: GameState, config: AiConfig = AI_LEVELS.magnata!
       // nearly free, but not if it risks the bank balance.
       const value = netValue(PRICES[deposit], ANNUAL_PROFIT[deposit], years);
       if (me.cash < PRICES[deposit] || (value < 0 && me.cash < PRICES[deposit] * 4)) {
-        return { type: 'offerCard' };
+        return sellOrSkip(state);
       }
       return { type: 'placeDeposit', siteId: site.id, deposit };
     }
@@ -282,7 +288,7 @@ export function aiAction(state: GameState, config: AiConfig = AI_LEVELS.magnata!
       if (free && me.cash >= PRICES.licence[free.terrain] * 3 && developmentUpside(free.terrain, years) > 0) {
         return { type: 'chooseTowerOrLicence', choice: 'licence', siteId: free.id };
       }
-      return { type: 'offerCard' };
+      return sellOrSkip(state);
     }
 
     case 'buyTankerChoice': {
@@ -291,14 +297,14 @@ export function aiAction(state: GameState, config: AiConfig = AI_LEVELS.magnata!
       const shared = netValue(PRICES.tanker / 2, ANNUAL_PROFIT.tanker / 2, years);
       if (solo > 0 && me.cash >= PRICES.tanker * 1.2) return { type: 'buyTanker', partner: null };
       if (shared > 0 && me.cash >= PRICES.tanker / 2) return { type: 'buyTanker', partner: 'bank' };
-      return { type: 'offerCard' };
+      return sellOrSkip(state);
     }
 
     case 'buyTruckChoice': {
       if (netValue(PRICES.truck, ANNUAL_PROFIT.truck, years) > 0 && me.cash >= PRICES.truck * 2) {
         return { type: 'buyTruck' };
       }
-      return { type: 'offerCard' };
+      return sellOrSkip(state);
     }
   }
 
