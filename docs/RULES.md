@@ -29,12 +29,21 @@ Currency: **Milhões de Kartos** (M). All values below are in millions.
 
 ## 2. Components
 
-Physical appearance, from photographs of a real copy: towers are black moulded
-derricks; oil reservoirs are grey cylindrical tanks stamped with their capacity
-("6 M.T."); gas reservoirs are white domes; the tank truck is yellow and the
-tanker blue; the game marker is a blue round pawn; licences are white tiles
-carrying the company wordmark; cheques are printed "BANCO DA KARTOLÂNDIA" in
-denominations of 1, 5, 10, 20 and 50 M.K.
+Physical appearance, from photographs of a real copy including one mid-game:
+
+- **Prospecting towers** — tall black lattice derricks.
+- **Oil reservoirs** — grey flat-topped cylinders, stamped with their capacity
+  ("6 M.T.") and moulded in three visibly different heights for 2, 4 and 6 M.T.
+- **Gas reservoirs** — white domes. A deliberately different silhouette, so oil
+  and gas read apart across the table at a glance.
+- **Tankers and trucks** — moulded in assorted colours (yellow and blue both
+  observed). Type is identified by *where the piece stands*, not by its colour:
+  tankers in the porto, trucks on land.
+- **Licences** — white tiles carrying the company mark (SACOR and SHELL both
+  photographed in play). **Every piece stands on top of a licence tile**, which
+  is how ownership is read on the board.
+- **Game marker** — a blue round pawn.
+- **Cheques** — printed "BANCO DA KARTOLÂNDIA", denominations 1, 5, 10, 20, 50 M.K.
 
 | Component | Qty |
 | --- | --- |

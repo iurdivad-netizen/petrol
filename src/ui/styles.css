@@ -146,17 +146,34 @@ h1, h2, h3 { margin: 0 0 8px; letter-spacing: 0.04em; }
 .site.selectable:hover { filter: brightness(1.18); }
 .site.selected { outline: 3px solid #ffe680; outline-offset: -3px; }
 
-.site .owner {
+/* A licence is a white tile carrying the company mark, as on the board. */
+.site .licence {
   position: absolute;
-  inset: 2px;
+  inset: 3px;
+  background: #fbf8f0;
+  border: 2px solid;
   border-radius: 2px;
-  opacity: 0.85;
+  display: grid;
+  place-items: center;
+  font-size: 6px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #333;
+  overflow: hidden;
 }
 .site .piece {
   position: relative;
   z-index: 1;
-  font-size: 15px;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
+  width: 92%;
+  height: 92%;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.piece-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.55));
 }
 
 /* --------------------------------------------------------------- players */

@@ -536,5 +536,23 @@ function render(): void {
   else renderGame(state);
 }
 
+/**
+ * Debug handle. Exposed only under ?debug so tests and manual inspection can
+ * reach into a live game: `__petroleo.state` is the GameState, `__petroleo.render()`
+ * repaints after changing it.
+ */
+if (DEBUG) {
+  (window as unknown as Record<string, unknown>)['__petroleo'] = {
+    get state() {
+      return state;
+    },
+    set state(next: GameState | null) {
+      state = next;
+    },
+    render,
+    save,
+  };
+}
+
 void COMPANIES;
 render();

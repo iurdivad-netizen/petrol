@@ -6,6 +6,7 @@
 
 import { INDUSTRIAL_DISPLAY_IDS, MAP, PASSAGEM_INDEX, SECOND_PASSAGEM_INDEX, TRACK } from '../data/board';
 import { SPACE_NAMES } from '../data/rules';
+import { depositSvg, tankerSvg, towerSvg, truckSvg } from './pieces';
 import type { GameState, Site } from '../engine/types';
 
 const COMPANY_COLOURS = ['#d4342a', '#1d9099', '#f0b93b', '#7b3fa0', '#2a7d4f', '#e2761b'];
@@ -125,13 +126,14 @@ export function renderBoard(state: GameState, handlers: BoardHandlers = {}): HTM
       const vehicle = (isPorto ? tankers : trucks)[slot];
       if (vehicle) {
         const lic = document.createElement('div');
-        lic.className = 'owner';
-        lic.style.background = companyColour(vehicle.ownerId);
-        lic.style.opacity = '0.6';
+        lic.className = 'licence';
+        lic.style.borderColor = companyColour(vehicle.ownerId);
         el.appendChild(lic);
         const piece = document.createElement('span');
         piece.className = 'piece';
-        piece.textContent = isPorto ? '🚢' : '🚚';
+        piece.innerHTML = isPorto
+          ? tankerSvg(companyColour(vehicle.ownerId))
+          : truckSvg(companyColour(vehicle.ownerId));
         const owner = state.players[vehicle.ownerId]?.company;
         piece.title = vehicle.partner === null
           ? `${owner}`
@@ -158,34 +160,32 @@ export function renderBoard(state: GameState, handlers: BoardHandlers = {}): HTM
     el.className = `site ${square.terrain}`;
     el.title = `${square.id} — ${square.terrain === 'sea' ? 'mar' : 'terra'}`;
 
-    if (site?.ownerId !== null && site !== undefined) {
-      const owner = document.createElement('div');
-      owner.className = 'owner';
-      owner.style.background = companyColour(site.ownerId as number);
-      owner.style.opacity = '0.55';
-      el.appendChild(owner);
-      el.title += ` — licença de ${state.players[site.ownerId as number]?.company}`;
+    if (site && site.ownerId !== null) {
+      // A licence is a white tile bearing the company's mark; every piece
+      // stands on one.
+      const company = state.players[site.ownerId]?.company ?? '';
+      const licence = document.createElement('div');
+      licence.className = 'licence';
+      licence.style.borderColor = companyColour(site.ownerId);
+      // The company mark only shows on a bare licence; once a tower or deposit
+      // stands on the tile the piece covers it, as it does on the board.
+      if (!site.tower && !site.deposit) licence.textContent = company;
+      el.appendChild(licence);
+      el.title += ` — licença ${company}`;
     }
     if (site?.tower) {
       const piece = document.createElement('span');
       piece.className = 'piece';
-      piece.textContent = '⛏';
+      piece.innerHTML = towerSvg();
       piece.title = 'Torre de prospecção';
       el.appendChild(piece);
     }
     if (site?.deposit) {
       const piece = document.createElement('span');
       piece.className = 'piece';
-      piece.textContent = site.deposit === 'gas' ? '🔥' : '🛢';
-      piece.title = site.deposit;
+      piece.innerHTML = depositSvg(site.deposit);
+      piece.title = site.deposit === 'gas' ? 'Reservatório de gás' : `Depósito de ${site.deposit.replace('oil', '')}`;
       el.appendChild(piece);
-      const label = document.createElement('span');
-      label.className = 'caption';
-      label.style.position = 'absolute';
-      label.style.bottom = '1px';
-      label.style.color = '#fff';
-      label.textContent = site.deposit === 'gas' ? 'GÁS' : site.deposit.replace('oil', '');
-      el.appendChild(label);
     }
 
     if (site && handlers.selectableSiteIds?.has(site.id)) {
