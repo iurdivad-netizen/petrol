@@ -281,9 +281,24 @@ the opportunity is lost.
 
 ## 12. Remaining gaps — on the board and cards, not in the booklet
 
-1. **Track length and layout.** The booklet numbers 20 *space types* but does not say how
-   many physical squares surround the map, nor in what order the types appear, nor which
-   square is opposite *Passagem de Ano* (needed for the ≤4-player second-payout rule).
+1. ~~**Track length and layout.**~~ **ESSENTIALLY RESOLVED.** Read off the
+   physical board: a **15 × 11 border of 48 cells**, travelled anticlockwise
+   from *Passagem de Ano* at the bottom-right corner. **47 of 48 cells are
+   confirmed.** The one still open is the tenth cell of the top edge: it sits at
+   a red position between two teal cells, so it cannot be the 7 first read
+   there, and it currently holds a placeholder.
+
+   The board carries two strong structures, both now enforced by tests:
+
+   - **The teal purchase spaces run in an unbroken 3 → 5 → 7 cycle** the whole
+     way round, across all four edges, without a single exception. This is the
+     tightest constraint on the board and it is what identified the one
+     misread cell.
+   - **The red event spaces ascend only along the bottom and left edges** —
+     2, 4, 6, 8, 9, 10, 11, then 12 to 16. The top and right edges introduce
+     17 to 20 and then repeat earlier values. An earlier reading of two edges
+     suggested the ascent continued all the way round; the full board
+     disproves it. All sixteen red values appear somewhere.
 2. **Per-card move values.** ~~Unknown.~~ **RECONSTRUCTED — the one part of
    this game that is designed rather than found**, and labelled as such in the
    code. No photograph of the deck exists. One real value is known (a camião

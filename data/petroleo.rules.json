@@ -5,7 +5,7 @@
   "source": "Original Karto rules booklet, 'PETRÓLEO — REGRAS', 9pp A5, Fábrica de Jogos Karto, Rua Delfim Ferreira 698, Porto.",
   "complete": false,
   "incompleteBecause": [
-    "board.track top and right edges",
+    "board.track: one cell on the top edge",
     "cards.moveValues (reconstructed, not evidenced)"
   ],
   "identity": {
@@ -509,9 +509,25 @@
       }
     ],
     "track": {
-      "value": null,
-      "confidence": "unknown",
-      "blocks": "Physical square count around the map and which space type occupies each, plus which square sits opposite Passagem de Ano. Needs a board scan."
+      "value": "resolved except one cell",
+      "confidence": "high",
+      "source": "read off the physical board by the project owner",
+      "shape": "15 x 11 rectangular border, 48 cells, travelled anticlockwise",
+      "passagemDeAno": "bottom-right corner (index 0)",
+      "secondPassagemDeAno": "top-left corner (index 24), exactly half a lap away, carrying the matching gold pennant",
+      "confirmedCells": 47,
+      "openCells": [
+        {
+          "edge": "top",
+          "indexWithinEdge": 9,
+          "note": "sits at a red position between two teal cells, so it cannot be the 7 first read there; holds a placeholder"
+        }
+      ],
+      "invariants": [
+        "teal purchase spaces run an unbroken 3 -> 5 -> 7 cycle across all four edges",
+        "red event spaces ascend along the bottom and left edges only (2,4,6,8,9,10,11 then 12-16); the top and right introduce 17-20 and repeat earlier values",
+        "all sixteen red values appear somewhere on the track"
+      ]
     },
     "map": {
       "value": "resolved",
@@ -661,8 +677,8 @@
     },
     {
       "rule": "Track layout (square order)",
-      "sourceConfidence": "unknown",
-      "implemented": "provisional",
+      "sourceConfidence": "high (47 of 48 cells)",
+      "implemented": true,
       "tested": true
     },
     {

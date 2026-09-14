@@ -51,17 +51,19 @@ export const PASSAGEM_INDEX = 0;
 export const SECOND_PASSAGEM_INDEX = WIDTH - 1 + (HEIGHT - 1);
 
 /**
- * Two invariants are visible on the board and are enforced by a test:
+ * Two invariants hold across the whole track and are enforced by tests:
  *
- *  1. Cells strictly alternate teal and red, and TEAL CELLS ARE ONLY EVER
- *     3, 5 or 7 — the three purchase spaces (sea licence, land licence,
- *     tower). Every red cell is an event or tax space.
- *  2. The red event spaces run in ASCENDING ORDER around the track: 2, 4, 6,
- *     8, 9, 10, 11 along the bottom, 12..16 up the left edge, 17..20 across
- *     the top, then repeating values down the right edge.
+ *  1. Cells strictly alternate teal and red. TEAL CELLS ARE ONLY EVER 3, 5 or
+ *     7 — the three purchase spaces (sea licence, land licence, tower) — and
+ *     they run in a strict repeating **3 -> 5 -> 7** cycle the whole way round,
+ *     unbroken across all four edges. Every red cell is an event or tax space.
+ *  2. The red spaces ascend only as far as the left edge: 2, 4, 6, 8, 9, 10,
+ *     11 along the bottom, then 12 to 16 up the left side. The top and right
+ *     edges do NOT continue the ascent — they introduce 17 to 20 and then
+ *     repeat earlier values. An earlier reading of two edges suggested the
+ *     ascent continued all the way round; the full board disproves it.
  *
- * These make the bottom and left edges self-checking, and they are the reason
- * those two are marked verified while the top and right are not.
+ * All 16 possible red values appear somewhere on the track.
  */
 
 /** Bottom edge, right-to-left from the Passagem corner. VERIFIED. */
@@ -69,18 +71,26 @@ const BOTTOM: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 3, 9, 5, 10, 7, 11, 3];
 /** Left edge, bottom-to-top, interior cells only. VERIFIED. */
 const LEFT: number[] = [12, 5, 13, 7, 14, 3, 15, 5, 16];
 /**
- * Top edge, left-to-right from the top-left corner. PROVISIONAL.
+ * Top edge, left-to-right from the top-left corner. Read off the board.
  *
- * The corner reads as space 7 in the photograph. It also carries the gold
- * pennant that matches Passagem de Ano's, which is what the booklet means by
- * "the opposite square presenting the same design" — so the cell is space 7
- * AND *becomes* a second Passagem de Ano when that option is enabled. The
- * engine models the second payout as a property of the index, not of the
- * space number, so both readings hold at once.
+ * The corner is space 7. It also carries the gold pennant matching Passagem de
+ * Ano's, which is what the booklet means by "the opposite square presenting the
+ * same design" — so the cell is space 7 AND *becomes* a second Passagem de Ano
+ * when that option is enabled. The engine models the second payout as a
+ * property of the track index rather than the space number, so both hold at
+ * once.
+ *
+ * One cell is still open: index 9 of this edge (the tenth number). It sits at a
+ * red position — both neighbours are teal, and the 3-5-7 teal cycle runs
+ * unbroken through every other cell on the board — so it cannot be a 7. The
+ * value below is a PLACEHOLDER pending a re-read, and that single cell is
+ * marked unverified.
  */
-const TOP: number[] = [7, 17, 3, 18, 5, 19, 7, 20, 3, 6, 5, 9, 7, 12, 3];
-/** Right edge, top-to-bottom, interior cells only. PROVISIONAL. */
-const RIGHT: number[] = [8, 5, 17, 7, 19, 3, 20, 5, 4];
+const TOP: number[] = [7, 17, 3, 11, 5, 18, 7, 6, 3, 9, 5, 12, 7, 17, 3];
+/** Index into TOP of the one cell not yet confirmed. */
+const TOP_UNVERIFIED_INDEX = 9;
+/** Right edge, top-to-bottom, interior cells only. Read off the board. */
+const RIGHT: number[] = [8, 5, 17, 7, 19, 3, 20, 5, 20];
 
 function buildTrack(): TrackCell[] {
   const cells: TrackCell[] = [];
@@ -89,12 +99,15 @@ function buildTrack(): TrackCell[] {
 
   BOTTOM.forEach((s, i) => push2(s, 'bottom', i === 0 || i === BOTTOM.length - 1, true));
   LEFT.forEach((s) => push2(s, 'left', false, true));
-  TOP.forEach((s, i) => push2(s, 'top', i === 0 || i === TOP.length - 1, false));
-  RIGHT.forEach((s) => push2(s, 'right', false, false));
+  TOP.forEach((s, i) =>
+    push2(s, 'top', i === 0 || i === TOP.length - 1, i !== TOP_UNVERIFIED_INDEX));
+  RIGHT.forEach((s) => push2(s, 'right', false, true));
   return cells;
 }
 
 export const TRACK: { verified: boolean; width: number; height: number; cells: TrackCell[] } = {
+  // 47 of 48 cells read off the physical board and consistent with both
+  // invariants. See TOP_UNVERIFIED_INDEX for the one outstanding cell.
   verified: false,
   width: WIDTH,
   height: HEIGHT,

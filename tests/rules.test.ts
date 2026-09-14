@@ -87,12 +87,38 @@ describe('track invariants (observed on the board photograph)', () => {
     }
   });
 
-  it('red event spaces ascend around the verified bottom and left edges', () => {
+  it('runs the teal purchase spaces in an unbroken 3 → 5 → 7 cycle', () => {
+    // The strongest structure on the board, and it holds across all four edges.
+    // Index 0 is Passagem de Ano, which sits outside the cycle.
+    const teal = TRACK.cells.filter((c, i) => i !== 0 && [1, 3, 5, 7].includes(c.space));
+    const cycle = [3, 5, 7];
+    teal.forEach((cell, i) => {
+      expect(cell.space, `teal cell ${i} at track index ${cell.index}`).toBe(cycle[i % 3]);
+    });
+  });
+
+  it('ascends the red spaces along the bottom and left edges only', () => {
+    // The ascent stops at the left edge: the top and right introduce 17–20 and
+    // then repeat earlier values. A reading of two edges suggested it continued
+    // all the way round; the full board disproves that.
     const reds = TRACK.cells
       .filter((c) => (c.edge === 'bottom' || c.edge === 'left') && ![1, 3, 5, 7].includes(c.space))
       .map((c) => c.space);
-    expect(reds).toEqual([...reds].sort((a, b) => a - b));
     expect(reds).toEqual([2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
+  });
+
+  it('uses every one of the sixteen red event spaces somewhere', () => {
+    const reds = new Set(
+      TRACK.cells.filter((c) => ![1, 3, 5, 7].includes(c.space)).map((c) => c.space),
+    );
+    const expected = [2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+    expect([...reds].sort((a, b) => a - b)).toEqual(expected);
+  });
+
+  it('has exactly one cell still awaiting confirmation', () => {
+    const open = TRACK.cells.filter((c) => !c.verified);
+    expect(open).toHaveLength(1);
+    expect(open[0]!.edge).toBe('top');
   });
 
   it('the second Passagem de Ano sits exactly half a lap from the first', () => {

@@ -132,12 +132,16 @@ function renderSetup(): void {
 }
 
 function provisionalBanner(): HTMLElement {
+  const open = TRACK.cells.filter((c) => !c.verified).length;
   const b = el('div', 'banner');
   b.innerHTML =
-    '<strong>Reconstrução em curso.</strong> As regras, os preços e os lucros vêm do livro de regras ' +
-    'original da Karto e estão verificados. O <em>percurso do tabuleiro</em> (ordem das casas), a ' +
-    'geografia do mapa e o número de casas de cada carta são leituras provisórias de uma fotografia ' +
-    'e ainda não estão confirmados — ver <code>docs/RULES.md §12</code>.';
+    '<strong>Reconstrução.</strong> As regras, os preços, os lucros, as casas do tabuleiro e a ' +
+    'grelha do mapa vêm do livro de regras original da Karto e do próprio tabuleiro, e estão ' +
+    'verificados' +
+    (open > 0 ? ` — exceto ${open} casa do percurso, ainda por confirmar` : '') +
+    '. O <em>número de casas de cada carta</em> é uma reconstrução: não existe fotografia do ' +
+    'baralho, e os valores foram deduzidos da economia do próprio jogo — ver ' +
+    '<code>docs/RULES.md §12</code>.';
   return b;
 }
 

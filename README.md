@@ -46,9 +46,8 @@ See **[docs/RULES.md](docs/RULES.md)** for the full reconstructed ruleset.
 
 Three things are printed on components rather than in the booklet:
 
-1. **Track layout** — how many physical squares surround the map, which of the 20 space
-   types sits on each, and which square is opposite *Passagem de Ano* (needed for the
-   second-payout rule at ≤4 players).
+1. **Track layout** — resolved: a 15 × 11 border of 48 cells, travelled
+   anticlockwise. 47 of 48 confirmed; one cell on the top edge still open.
 2. ~~**Map geography**~~ — **resolved.** 10 × 15 = 150 cells: 85 prospecting
    (47 land, 38 sea), 14 porto, 14 card panel, 37 plain illustration where the
    grid simply stops.
