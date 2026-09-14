@@ -277,8 +277,13 @@ the opportunity is lost.
    square is opposite *Passagem de Ano* (needed for the ≤4-player second-payout rule).
 2. **Per-card move values.** Each of the 60 cards is printed with the number of squares to
    advance. The booklet does not tabulate them.
-3. **Map geography.** Number and arrangement of land vs sea prospecting squares, and the
-   position of the **porto** and the **zona industrial**.
+3. **Map geography.** The *structure* is now settled from a board photograph:
+   **the grid does not cover the whole map.** Three regions lie outside the
+   prospecting squares — the **porto** (tankers), the **zona industrial**
+   (trucks) and the printed card panel — which is exactly what the booklet
+   requires when it places a truck "na zona industrial, *fora dos quadrados de
+   prospecção*". What remains unresolved is the *detail*: the exact column and
+   row counts, the coastline, and the precise extent of each region.
 
 One value is now confirmed: a *camião cisterna* card carries **7**.
 

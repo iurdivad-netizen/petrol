@@ -219,6 +219,27 @@ describe('bankruptcy and scoring (RULES.md §11)', () => {
     expect(score.towers).toBe(PRICES.tower.sea);
   });
 
+  it('ends the turn cleanly when a space bankrupts the player mid-turn', () => {
+    // Regression: resolving a space can bankrupt the arriving player. Their hand
+    // is surrendered, so the turn must not continue on to draw and play.
+    const s = game(3);
+    s.currentPlayer = 0;
+    s.phase = 'resolveSpace';
+    s.players[0]!.cash = 1;
+    const site = giveLicence(s, 0, 'land');
+    site.deposit = 'oil6MT';
+
+    beginSpace(s, 4); // Temporal — but no tanker, so nothing is owed
+    s.vehicles.push({ id: 'tk', kind: 'tanker', ownerId: 0, partner: null });
+    beginSpace(s, 4); // now a 50 M repair against 1 M of cash
+
+    expect(s.players[0]!.bankrupt).toBe(true);
+    expect(s.players[0]!.hand).toHaveLength(0);
+    applyAction(s, { type: 'drawCard' });
+    // The engine must not be sitting in playCard with an empty hand.
+    expect(s.phase === 'playCard' && s.players[s.currentPlayer]!.hand.length === 0).toBe(false);
+  });
+
   it('a bankrupt company cannot win', () => {
     const s = game(2);
     s.players[0]!.bankrupt = true;

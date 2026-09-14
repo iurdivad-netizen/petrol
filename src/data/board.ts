@@ -102,49 +102,77 @@ export const TRACK: { verified: boolean; width: number; height: number; cells: T
 };
 
 /**
- * Map geography — the grid of prospecting squares.
+ * Map geography — the interior of the track.
  *
- * ALSO PROVISIONAL. The photograph shows a grid ruled over an illustrated
- * coastline: ochre highlands and plain to the north and east, sea to the
- * south-west, with a porto (pier and moored tankers) centre-left and a zona
- * industrial (refinery, tank farm, roads) on land to the north-east. The exact
- * row/column count and the land/sea boundary could not be resolved.
+ * STRUCTURALLY CORRECTED from a board photograph: **the grid does not cover the
+ * whole map.** Three regions sit outside the prospecting squares, which is
+ * exactly what the booklet requires and what the earlier model got wrong:
  *
- * Site count is deliberately generous rather than guessed tight: the booklet
- * caps real scarcity through the component supply (28 towers, 36 reservoirs),
- * not through the number of squares.
+ *   - the **porto**, where a tanker is placed on its owner's licence (§8);
+ *   - the **zona industrial**, where a truck goes — the booklet says in so many
+ *     words "na zona industrial, FORA DOS QUADRADOS DE PROSPECÇÃO";
+ *   - the printed **card panel** (deck box, played-card box, Karto logo).
+ *
+ * Only `prospecting` squares can be licensed, towered or developed.
+ *
+ * The layout below remains PROVISIONAL in its detail — the exact column and row
+ * counts and the coastline are read from photographs, not measured. The region
+ * structure, however, is confirmed by both the booklet and the artwork.
+ *
+ * Legend: L land prospecting · S sea prospecting · P porto · I zona industrial ·
+ *         X printed card panel
  */
-const MAP_COLUMNS = 11;
-const MAP_ROWS = 8;
+const MAP_LAYOUT = [
+  'SLLLLLLLLLL',
+  'SSLLLIIILLL',
+  'SSLLLIIILXX',
+  'SSLLLLSLLXX',
+  'SSPPPSSSLXX',
+  'SSPPPSSSLXX',
+  'SSSSSSSSSXX',
+  'SSSSSSSSSXX',
+] as const;
 
-/**
- * Coastline approximated from the photograph: a headland runs from the upper
- * left down to the centre, open sea fills the lower left and centre-bottom,
- * and land returns along the top and right. Provisional.
- */
-function terrainFor(col: number, row: number): Terrain {
-  if (row >= 5) return col >= 9 ? 'land' : 'sea';
-  if (row >= 3) return col <= 1 || (col >= 2 && col <= 6 && row >= 4) ? 'sea' : 'land';
-  return col === 0 && row >= 2 ? 'sea' : 'land';
-}
+export type MapRegion = 'prospecting' | 'porto' | 'industrial' | 'panel';
 
 export interface MapSquare {
   id: string;
   col: number;
   row: number;
+  region: MapRegion;
+  /** Only meaningful for prospecting squares. */
   terrain: Terrain;
 }
 
-export const MAP: { verified: boolean; columns: number; rows: number; squares: MapSquare[] } = {
+function classify(ch: string): { region: MapRegion; terrain: Terrain } {
+  switch (ch) {
+    case 'L': return { region: 'prospecting', terrain: 'land' };
+    case 'S': return { region: 'prospecting', terrain: 'sea' };
+    case 'P': return { region: 'porto', terrain: 'sea' };
+    case 'I': return { region: 'industrial', terrain: 'land' };
+    default: return { region: 'panel', terrain: 'land' };
+  }
+}
+
+const MAP_COLUMNS = MAP_LAYOUT[0].length;
+const MAP_ROWS = MAP_LAYOUT.length;
+
+export const MAP: {
+  verified: boolean;
+  columns: number;
+  rows: number;
+  squares: MapSquare[];
+} = {
   verified: false,
   columns: MAP_COLUMNS,
   rows: MAP_ROWS,
-  squares: Array.from({ length: MAP_COLUMNS * MAP_ROWS }, (_, n) => {
-    const col = n % MAP_COLUMNS;
-    const row = Math.floor(n / MAP_COLUMNS);
-    return { id: `s${col}-${row}`, col, row, terrain: terrainFor(col, row) };
-  }),
+  squares: MAP_LAYOUT.flatMap((line, row) =>
+    [...line].map((ch, col) => ({ id: `s${col}-${row}`, col, row, ...classify(ch) })),
+  ),
 };
+
+/** The squares a company may actually licence and drill. */
+export const PROSPECTING_SQUARES = MAP.squares.filter((s) => s.region === 'prospecting');
 
 /**
  * Per-card move values. Still provisional (RULES.md §12) — they are printed on

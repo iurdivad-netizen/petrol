@@ -497,9 +497,14 @@
       "blocks": "Physical square count around the map and which space type occupies each, plus which square sits opposite Passagem de Ano. Needs a board scan."
     },
     "map": {
-      "value": null,
-      "confidence": "unknown",
-      "blocks": "Count and arrangement of land vs sea prospecting squares; position of the porto and the zona industrial. Needs a board scan."
+      "value": "partially resolved",
+      "confidence": "structure high / detail unknown",
+      "regionsOutsideTheGrid": [
+        "porto",
+        "zonaIndustrial",
+        "cardPanel"
+      ],
+      "note": "A board photograph confirms the prospecting grid does NOT cover the whole map. The porto (where a tanker sits on its owner's licence), the zona industrial (trucks — the booklet says explicitly 'fora dos quadrados de prospecção') and the printed card panel all lie outside it. Only the exact grid dimensions, coastline and region extents remain unread."
     },
     "markerDirection": "always around the map in the direction of the arrow"
   },
@@ -640,7 +645,7 @@
     },
     {
       "rule": "Map geography (land/sea, porto, zona industrial)",
-      "sourceConfidence": "unknown",
+      "sourceConfidence": "structure high / detail unknown",
       "implemented": "provisional",
       "tested": true
     },

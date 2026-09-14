@@ -6,7 +6,8 @@ import {
   DECK_COMPOSITION, PRICES, STARTING_CAPITAL, TURNS_PER_PLAYER,
 } from '../src/data/rules';
 import { buildDeck } from '../src/engine/setup';
-import { TRACK, SECOND_PASSAGEM_INDEX, PASSAGEM_INDEX } from '../src/data/board';
+import { MAP, PROSPECTING_SQUARES, TRACK, SECOND_PASSAGEM_INDEX, PASSAGEM_INDEX } from '../src/data/board';
+import { createGame } from '../src/engine/setup';
 
 const json = JSON.parse(readFileSync('data/petroleo.rules.json', 'utf8'));
 
@@ -105,5 +106,41 @@ describe('track invariants (observed on the board photograph)', () => {
       expect(cell.space).toBeGreaterThanOrEqual(1);
       expect(cell.space).toBeLessThanOrEqual(20);
     }
+  });
+});
+
+describe('map regions (booklet + board photograph)', () => {
+  it('is a well-formed rectangle', () => {
+    expect(MAP.squares).toHaveLength(MAP.columns * MAP.rows);
+    const ids = new Set(MAP.squares.map((s) => s.id));
+    expect(ids.size).toBe(MAP.squares.length);
+  });
+
+  it('does not cover the whole map with prospecting squares', () => {
+    expect(PROSPECTING_SQUARES.length).toBeLessThan(MAP.squares.length);
+    for (const region of ['porto', 'industrial', 'panel'] as const) {
+      expect(MAP.squares.some((s) => s.region === region), region).toBe(true);
+    }
+  });
+
+  it('puts the porto at sea and the zona industrial on land', () => {
+    for (const s of MAP.squares.filter((x) => x.region === 'porto')) expect(s.terrain).toBe('sea');
+    for (const s of MAP.squares.filter((x) => x.region === 'industrial')) expect(s.terrain).toBe('land');
+  });
+
+  it('supplies enough prospecting squares for every tower and reservoir in the box', () => {
+    // 28 towers plus 36 reservoirs is the most that can ever be on the board.
+    expect(PROSPECTING_SQUARES.length).toBeGreaterThanOrEqual(28);
+    expect(PROSPECTING_SQUARES.filter((s) => s.terrain === 'land').length).toBeGreaterThan(0);
+    expect(PROSPECTING_SQUARES.filter((s) => s.terrain === 'sea').length).toBeGreaterThan(0);
+  });
+
+  it('creates sites only for prospecting squares — never the porto, zona industrial or panel', () => {
+    const s = createGame({ playerCount: 4, seed: 1 });
+    expect(s.sites).toHaveLength(PROSPECTING_SQUARES.length);
+    const nonProspecting = new Set(
+      MAP.squares.filter((x) => x.region !== 'prospecting').map((x) => x.id),
+    );
+    for (const site of s.sites) expect(nonProspecting.has(site.id)).toBe(false);
   });
 });

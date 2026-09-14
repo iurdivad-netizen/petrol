@@ -82,9 +82,65 @@ export function renderBoard(state: GameState, handlers: BoardHandlers = {}): HTM
   map.style.gridTemplateColumns = `repeat(${MAP.columns}, 1fr)`;
   map.style.gridTemplateRows = `repeat(${MAP.rows}, 1fr)`;
 
+  // Vehicles live outside the prospecting grid: tankers in the porto, trucks in
+  // the zona industrial (RULES.md §8).
+  const portoSquares = MAP.squares.filter((s) => s.region === 'porto');
+  const industrialSquares = MAP.squares.filter((s) => s.region === 'industrial');
+  const tankers = state.vehicles.filter((v) => v.kind === 'tanker');
+  const trucks = state.vehicles.filter((v) => v.kind === 'truck');
+
   for (const square of MAP.squares) {
-    const site = state.sites.find((s) => s.id === square.id);
     const el = document.createElement('div');
+    // Every square is placed explicitly. Auto-placement would flow cells around
+    // the definitely-positioned card panel and displace the whole map.
+    el.style.gridColumn = String(square.col + 1);
+    el.style.gridRow = String(square.row + 1);
+
+    if (square.region === 'panel') {
+      el.className = 'site panel';
+      map.appendChild(el);
+      continue;
+    }
+
+    if (square.region === 'porto' || square.region === 'industrial') {
+      const isPorto = square.region === 'porto';
+      el.className = `site ${isPorto ? 'porto' : 'industrial'}`;
+      el.title = isPorto ? 'Porto — petroleiros' : 'Zona industrial — camiões cisterna';
+
+      const slot = (isPorto ? portoSquares : industrialSquares).indexOf(square);
+      const vehicle = (isPorto ? tankers : trucks)[slot];
+      if (vehicle) {
+        const lic = document.createElement('div');
+        lic.className = 'owner';
+        lic.style.background = companyColour(vehicle.ownerId);
+        lic.style.opacity = '0.6';
+        el.appendChild(lic);
+        const piece = document.createElement('span');
+        piece.className = 'piece';
+        piece.textContent = isPorto ? '🚢' : '🚚';
+        const owner = state.players[vehicle.ownerId]?.company;
+        piece.title = vehicle.partner === null
+          ? `${owner}`
+          : `${owner} em sociedade com ${vehicle.partner === 'bank' ? 'o banco' : state.players[vehicle.partner]?.company}`;
+        el.appendChild(piece);
+        if (vehicle.partner !== null) {
+          const mark = document.createElement('span');
+          mark.className = 'partner-mark';
+          mark.textContent = vehicle.partner === 'bank' ? '●' : '◐';
+          mark.title = piece.title;
+          el.appendChild(mark);
+        }
+      } else if (slot === 0) {
+        const label = document.createElement('span');
+        label.className = 'region-label';
+        label.textContent = isPorto ? 'PORTO' : 'ZONA INDUSTRIAL';
+        el.appendChild(label);
+      }
+      map.appendChild(el);
+      continue;
+    }
+
+    const site = state.sites.find((s) => s.id === square.id);
     el.className = `site ${square.terrain}`;
     el.title = `${square.id} — ${square.terrain === 'sea' ? 'mar' : 'terra'}`;
 
@@ -125,6 +181,22 @@ export function renderBoard(state: GameState, handlers: BoardHandlers = {}): HTM
     if (site && handlers.selectedSiteIds?.has(site.id)) el.classList.add('selected');
 
     map.appendChild(el);
+  }
+
+  // The printed card panel, laid over its region of the grid.
+  const panel = MAP.squares.filter((s) => s.region === 'panel');
+  if (panel.length > 0) {
+    const cols = panel.map((s) => s.col);
+    const rows = panel.map((s) => s.row);
+    const overlay = document.createElement('div');
+    overlay.className = 'panel-inner';
+    overlay.style.gridColumn = `${Math.min(...cols) + 1} / ${Math.max(...cols) + 2}`;
+    overlay.style.gridRow = `${Math.min(...rows) + 1} / ${Math.max(...rows) + 2}`;
+    overlay.innerHTML =
+      '<div class="deck-box">Coloque aqui o baralho com as costas voltadas para cima</div>' +
+      '<div class="karto-mark">Petróleo<span>Karto</span></div>' +
+      '<div class="deck-box">Coloque aqui a carta que jogou com as costas voltadas para baixo</div>';
+    map.appendChild(overlay);
   }
 
   board.appendChild(map);

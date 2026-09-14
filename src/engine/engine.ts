@@ -76,6 +76,14 @@ function resolveCurrentSpace(state: GameState): void {
 function afterSpace(state: GameState): void {
   state.pending = { kind: 'none' };
   if (state.phase === 'gameOver') return;
+
+  // Resolving a space can bankrupt the player who just arrived on it. A failed
+  // company has surrendered its hand, so there is nothing left to draw, play or
+  // advance with — the turn ends there.
+  if (player(state, state.currentPlayer).bankrupt) {
+    endTurn(state);
+    return;
+  }
   state.phase = 'draw';
 }
 
@@ -292,6 +300,11 @@ export function applyAction(state: GameState, action: Action): ActionResult {
       if (state.phase !== 'draw') return fail('Não é altura de tirar carta.');
       const card = state.deck.shift();
       if (card) p.hand.push(card);
+      if (p.hand.length === 0) {
+        // Deck exhausted and hand empty: this company has played its ten cards.
+        endTurn(state);
+        return ok;
+      }
       state.phase = 'playCard';
       return ok;
     }

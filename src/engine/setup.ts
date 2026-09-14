@@ -7,7 +7,7 @@
  * mechanical consequence and is represented only as a label.
  */
 
-import { MAP, PROVISIONAL_MOVE_VALUES, TRACK } from '../data/board';
+import { PROSPECTING_SQUARES, PROVISIONAL_MOVE_VALUES, TRACK } from '../data/board';
 import {
   BANK_STARTING_CASH,
   CARDS_PER_PLAYER,
@@ -76,7 +76,9 @@ export function createGame(options: NewGameOptions = {}): GameState {
     boughtPrivilege: null,
   }));
 
-  const sites: Site[] = MAP.squares.map((sq) => ({
+  // Only prospecting squares become sites — the porto, the zona industrial and
+  // the printed card panel lie outside the grid (see src/data/board.ts).
+  const sites: Site[] = PROSPECTING_SQUARES.map((sq) => ({
     id: sq.id,
     terrain: sq.terrain,
     ownerId: null,
