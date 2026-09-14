@@ -57,7 +57,16 @@ Three things are printed on components rather than in the booklet:
 
 A legible board scan closes 1 and 2; card photographs close 3.
 
-## Running it
+## Playing it
+
+The quickest way is the published build — no install, nothing to clone:
+
+**https://claude.ai/code/artifact/f5134be1-a7c5-488b-99a7-b5680656f702**
+
+Pick a player count and play. The game saves to your browser automatically and
+offers to resume.
+
+## Running it locally
 
 ```bash
 npm install
@@ -66,6 +75,8 @@ npm test           # 48 tests
 npm run typecheck
 npm run build      # static bundle in dist/
 npm run preview    # serve the built bundle
+
+npm run build:artifact   # single self-contained HTML file in dist/artifact.html
 ```
 
 Requires Node 22+. The build is a static bundle with no server, deployable to

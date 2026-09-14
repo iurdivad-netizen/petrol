@@ -3,14 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Faithful digital recreation of the 1976 Karto board game PETRÓLEO",
+  "description": "Faithful digital recreation of the 1976 Karto board game PETR\u00d3LEO",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:artifact": "npm run build && node scripts/build-artifact.mjs"
   },
   "devDependencies": {
     "@types/node": "^26.5.1",
