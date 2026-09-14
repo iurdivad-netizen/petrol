@@ -31,6 +31,8 @@ export interface NewGameOptions {
   seed?: number;
   /** Optional second payout square; the booklet allows it at <=4 players (§8). */
   secondPassagem?: boolean;
+  /** Player ids played by the computer. */
+  aiPlayers?: number[];
 }
 
 /**
@@ -109,6 +111,7 @@ export function createGame(options: NewGameOptions = {}): GameState {
     duplicarUsed: false,
     turnsTaken: 0,
     bankrupt: false,
+    isAi: (options.aiPlayers ?? []).includes(id),
     boughtPrivilege: null,
   }));
 

@@ -72,6 +72,8 @@ export interface Player {
   duplicarUsed: boolean;
   turnsTaken: number;
   bankrupt: boolean;
+  /** Played by the computer. Purely a controller flag: the rules do not care. */
+  isAi: boolean;
   /**
    * A card privilege bought from a rival at auction (§6). The booklet says the
    * buyer "tem direito a jogar novamente na sua vez" — so it is exercised at

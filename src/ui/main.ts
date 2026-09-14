@@ -16,6 +16,8 @@ import { CARD_NAMES, COMPANIES, PRICES, SPACE_NAMES, SECOND_PASSAGEM_MAX_PLAYERS
 import { MAP, TRACK } from '../data/board';
 import { companyColour, renderBoard } from './board-view';
 import { priceCard, rulesContent } from './rules-view';
+import { AI_LEVELS, aiAction, yearsRemaining } from '../engine/ai';
+import type { AiConfig } from '../engine/ai';
 import type { Action } from '../engine/actions';
 import type { GameState, Site } from '../engine/types';
 
@@ -38,6 +40,39 @@ let selected = new Set<string>();
 let notice = '';
 /** Narrow screens only: enlarge the board and scroll it instead of fitting it. */
 let boardZoomed = false;
+/** Difficulty for every computer company in the current game. */
+let aiLevel: keyof typeof AI_LEVELS = 'gestor';
+let aiTimer: number | null = null;
+
+/**
+ * Runs the computer companies. Each action is applied on a short delay so the
+ * turn can be followed rather than flashing past, and the log records it.
+ */
+function scheduleAi(): void {
+  if (aiTimer !== null) {
+    clearTimeout(aiTimer);
+    aiTimer = null;
+  }
+  if (!state || state.phase === 'gameOver') return;
+
+  const config: AiConfig = AI_LEVELS[aiLevel] ?? AI_LEVELS.gestor!;
+  const action = aiAction(state, config);
+  if (!action) return;
+
+  aiTimer = window.setTimeout(() => {
+    aiTimer = null;
+    if (!state) return;
+    const result = applyAction(state, action);
+    if (!result.ok) {
+      // A refused action would loop; stop and let the player take over.
+      notice = `A companhia automática não conseguiu jogar: ${result.error ?? ''}`;
+      render();
+      return;
+    }
+    save();
+    render();
+  }, 620);
+}
 
 /**
  * The rulebook, opened over the game. Built once per open from the engine's own
@@ -132,13 +167,52 @@ function renderSetup(): void {
     row.appendChild(
       button(`${n} jogadores`, () => {
         const second = n <= SECOND_PASSAGEM_MAX_PLAYERS && secondBox.checked;
-        state = createGame({ playerCount: n, seed: Date.now() >>> 0, secondPassagem: second });
+        const humans = Math.min(Number(humanSelect.value), n);
+        aiLevel = levelSelect.value as keyof typeof AI_LEVELS;
+        state = createGame({
+          playerCount: n,
+          seed: Date.now() >>> 0,
+          secondPassagem: second,
+          // Humans take the first seats; the computer plays the rest.
+          aiPlayers: Array.from({ length: n }, (_, i) => i).filter((i) => i >= humans),
+        });
         save();
         render();
       }),
     );
   }
   panel.appendChild(row);
+
+  const opts = el('div', 'setup-options');
+
+  const humanLabel = el('label');
+  humanLabel.append('Jogadores humanos ');
+  const humanSelect = document.createElement('select');
+  humanSelect.id = 'human-count';
+  for (let i = 0; i <= 6; i++) {
+    const o = document.createElement('option');
+    o.value = String(i);
+    o.textContent = String(i);
+    if (i === 1) o.selected = true;
+    humanSelect.appendChild(o);
+  }
+  humanLabel.appendChild(humanSelect);
+
+  const levelLabel = el('label');
+  levelLabel.append('Nível das companhias automáticas ');
+  const levelSelect = document.createElement('select');
+  levelSelect.id = 'ai-level';
+  for (const name of Object.keys(AI_LEVELS)) {
+    const o = document.createElement('option');
+    o.value = name;
+    o.textContent = name;
+    if (name === 'gestor') o.selected = true;
+    levelSelect.appendChild(o);
+  }
+  levelLabel.appendChild(levelSelect);
+
+  opts.append(humanLabel, levelLabel);
+  panel.appendChild(opts);
 
   const label = el('label', 'muted');
   const secondBox = document.createElement('input');
@@ -208,6 +282,10 @@ function playerPanel(s: GameState): HTMLElement {
 
     const name = el('div');
     name.append(p.company);
+    if (p.isAi) {
+      const tag = el('span', 'tag green', 'AUTO');
+      name.appendChild(tag);
+    }
     if (p.nationalised) {
       const tag = el('span', 'tag', 'NACIONALIZADA');
       name.appendChild(tag);
@@ -294,9 +372,19 @@ function controls(s: GameState): HTMLElement {
   const pending = s.pending;
 
   const heading = el('div', 'turn-head');
-  heading.appendChild(el('h3', undefined, `Vez de ${p.company}`));
+  heading.appendChild(el('h3', undefined, `Vez de ${p.company}${p.isAi ? ' (automática)' : ''}`));
   heading.appendChild(button('Regras', () => openRules(s.players.length), 'secondary'));
   wrap.appendChild(heading);
+
+  const waitingOnAi =
+    p.isAi || (s.phase === 'auction' && s.auction && s.players[s.auction.awaiting[0] ?? -1]?.isAi);
+  if (waitingOnAi && s.phase !== 'gameOver') {
+    const thinking = el('div', 'prompt thinking');
+    thinking.textContent =
+      `${p.company} está a jogar — restam cerca de ${yearsRemaining(s).toFixed(1)} anos de lucros.`;
+    wrap.appendChild(thinking);
+    return wrap;
+  }
 
   const prompt = el('div', 'prompt');
   const actions = el('div', 'actions');
@@ -604,6 +692,7 @@ function renderGame(s: GameState): void {
 function render(): void {
   if (!state) renderSetup();
   else renderGame(state);
+  scheduleAi();
 }
 
 /**

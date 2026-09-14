@@ -108,6 +108,37 @@ towers and deposit sites; the action bar offers only what the rules permit at
 that moment. The game saves to `localStorage` on every action and offers to
 resume. Tested on current Chromium, Firefox and WebKit.
 
+## Computer opponents
+
+Choose how many seats are human on the setup screen; the computer takes the
+rest, at *aprendiz*, *gestor* or *magnata*.
+
+The AI is built around the one calculation that governs Petróleo: **years
+remaining**. Every asset is priced against its annual yield, so nothing is worth
+buying in the last year and almost anything is worth buying in the second. A
+6 M.T. field on land costs 22 M all-in and returns 20 M a year; a tanker costs
+300 M against 100 M a year and breaks even at exactly three years — which is
+where the booklet itself draws the line for the optional second Passagem de Ano.
+
+So it estimates how many crossings are left, values every option at
+income × years − cost, and takes the best. Three pieces of game-specific
+judgement sit on top:
+
+- **Land develops cheaper than sea** — 12 M of licence and tower against 17 M —
+  even though the land licence costs more. It prefers land when it has a choice.
+- **The card you play chooses your successor's square, not your own.** Among
+  cards worth much the same to itself, it plays the one that lands the next
+  company on a tax or a disaster rather than a purchase space.
+- **Passagem de Ano pays everyone.** Crossing it is only good while the AI
+  out-earns the rival it is about to hand the turn to.
+
+It also bids in auctions — only for what it can actually use, and never above
+what the item is worth to it after the bank's price.
+
+The strategy is tested, not just exercised: a suite pins the valuation
+reasoning, and a 60-game match confirms full-strength play out-earns near-random
+play. A strategy that cannot beat noise is not a strategy.
+
 ## Architecture
 
 ```
@@ -160,10 +191,9 @@ mid-game JSON round-trip reaches the same final scoreboard.
    exactly 10 own plays); and whether flat repair costs apply without owning the
    relevant asset (charged unconditionally except where the booklet states a
    condition).
-3. **No AI opponents.** Hot-seat local multiplayer only, by design — the brief
-   sequences AI after a correct, tested human game. The engine is AI-ready: it
-   is pure, exposes legality checks, and the test suite already contains a
-   working automaton driver.
+3. **AI difficulty is one strategy at three confidence levels**, not three
+   strategies. `skill` blends the best judgement with a random legal move, so
+   *aprendiz* plays the same game as *magnata*, just less consistently.
 4. **Artwork is original.** Structure, palette and typography follow the 1976
    board; no scanned assets are used. Company names are data (`COMPANIES` in
    `src/data/rules.ts`) and can be swapped for a trademark-free set.
