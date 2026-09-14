@@ -1,0 +1,177 @@
+/**
+ * Core data model for PETRÓLEO (Karto, 1976).
+ *
+ * Every type here is plain serialisable data — no classes, no functions, no
+ * references to DOM or UI. The whole GameState round-trips through JSON, which
+ * is what makes save/load and deterministic replay work.
+ *
+ * Rule references in comments cite docs/RULES.md sections.
+ */
+
+export type PlayerId = number;
+export type Terrain = 'land' | 'sea';
+
+/** The four things a prospecting square can ultimately hold (§7). */
+export type DepositKind = 'oil2MT' | 'oil4MT' | 'oil6MT' | 'gas';
+
+/** The seven card types dealt from the deck (§4). */
+export type CardType =
+  | 'torreOuLicenca'
+  | 'reservatorioGas'
+  | 'reservatorio6MT'
+  | 'reservatorio4MT'
+  | 'reservatorio2MT'
+  | 'petroleiro'
+  | 'camiaoCisterna';
+
+export interface Card {
+  id: string;
+  type: CardType;
+  /** Squares the blue marker advances when this card is played (§4). */
+  move: number;
+}
+
+/**
+ * A prospecting square on the map. A square is only "in exploration" once it
+ * bears a tower or a deposit (§7) — which is what space 2 confiscates against.
+ */
+export interface Site {
+  id: string;
+  terrain: Terrain;
+  /** Licence owner, or null if unlicensed. */
+  ownerId: PlayerId | null;
+  tower: boolean;
+  deposit: DepositKind | null;
+}
+
+/** Tankers sit in the porto, trucks in the zona industrial (§8). */
+export interface Vehicle {
+  id: string;
+  kind: 'tanker' | 'truck';
+  /** Commanding licence holder — the one whose licence sits on top (§8). */
+  ownerId: PlayerId;
+  /**
+   * Tanker partnerships only. A player id for a company partnership, 'bank'
+   * for a green-marker partnership with the bank, null if solely owned.
+   * Always a 50/50 split of profits and losses.
+   */
+  partner: PlayerId | 'bank' | null;
+}
+
+export interface Player {
+  id: PlayerId;
+  company: string;
+  cash: number;
+  hand: Card[];
+  /**
+   * Nationalised companies receive and pay half of everything until Livre
+   * Empresa clears it (§9, spaces 13 and 17).
+   */
+  nationalised: boolean;
+  /** The once-per-game opening double-licence right (§10). */
+  duplicarUsed: boolean;
+  turnsTaken: number;
+  bankrupt: boolean;
+  /**
+   * A card privilege bought from a rival at auction (§6). The booklet says the
+   * buyer "tem direito a jogar novamente na sua vez" — so it is exercised at
+   * the start of their next turn, in addition to their own card, which keeps
+   * every player's own play count at exactly 10.
+   */
+  boughtPrivilege: Card | null;
+}
+
+export interface BankStock {
+  cash: number;
+  towers: number;
+  oil2MT: number;
+  oil4MT: number;
+  oil6MT: number;
+  gas: number;
+  tankers: number;
+  trucks: number;
+}
+
+export type Phase =
+  | 'resolveSpace'
+  | 'draw'
+  | 'playCard'
+  | 'resolveCard'
+  | 'auction'
+  | 'advance'
+  | 'gameOver';
+
+/**
+ * A decision the engine is waiting on. Kept explicit rather than implied by
+ * phase alone, because several spaces need a player to choose *which* asset is
+ * affected (which licences are confiscated, which tower runs dry).
+ */
+export type Pending =
+  | { kind: 'none' }
+  | { kind: 'chooseSpace'; /** Space 20 — apply any of 1..19. */ options: number[] }
+  | { kind: 'optionalBuyLicence'; terrain: Terrain; mayDuplicate: boolean }
+  | { kind: 'optionalBuyTower' }
+  | { kind: 'confiscateLicences'; count: number }
+  | { kind: 'surrenderTowerSite' }
+  | { kind: 'placeDeposit'; deposit: DepositKind }
+  | { kind: 'buyTankerChoice' }
+  | { kind: 'buyTruckChoice' }
+  | { kind: 'towerOrLicenceChoice' };
+
+export interface AuctionState {
+  /** The card being sold because its holder cannot or will not use it (§6). */
+  card: Card;
+  sellerId: PlayerId;
+  bids: Record<PlayerId, number>;
+  /** Players yet to declare a bid or pass. */
+  awaiting: PlayerId[];
+}
+
+export interface GameEvent {
+  turn: number;
+  playerId: PlayerId | null;
+  message: string;
+}
+
+export interface GameState {
+  /** Bumped when the shape changes so old saves can be migrated or rejected. */
+  saveVersion: number;
+  rngState: number;
+
+  players: Player[];
+  currentPlayer: PlayerId;
+  phase: Phase;
+  pending: Pending;
+
+  /** Index into the board track. */
+  markerPos: number;
+  /** Whether the marker has been placed at all (first turn skips space resolution). */
+  markerPlaced: boolean;
+  /** Completed passages of Passagem de Ano — space 2 only bites from the 3rd (§9). */
+  passagemCount: number;
+  /** Optional second payout square, allowed at 4 players or fewer (§8). */
+  secondPassagemEnabled: boolean;
+
+  sites: Site[];
+  vehicles: Vehicle[];
+
+  deck: Card[];
+  /** Played cards, face down beside the deck. */
+  discard: Card[];
+
+  bank: BankStock;
+  auction: AuctionState | null;
+
+  /**
+   * True while a player is exercising a privilege bought at auction at the
+   * start of their turn (§6). It is not their own card play, so it must not
+   * advance the marker — the turn continues to space resolution afterwards.
+   */
+  exercisingPrivilege: boolean;
+
+  turnNumber: number;
+  /** Every player takes exactly 10 turns (§11). */
+  turnsPerPlayer: number;
+  log: GameEvent[];
+  winnerIds: PlayerId[] | null;
+}
