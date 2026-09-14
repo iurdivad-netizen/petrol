@@ -118,14 +118,27 @@ describe('map regions (booklet + board photograph)', () => {
 
   it('does not cover the whole map with prospecting squares', () => {
     expect(PROSPECTING_SQUARES.length).toBeLessThan(MAP.squares.length);
-    for (const region of ['porto', 'industrial', 'panel'] as const) {
+    // The porto, the card panel and plain ungridded illustration all exist on
+    // the real board. A separately gridded "zona industrial" does not — the
+    // refinery is drawn over the land.
+    for (const region of ['porto', 'panel', 'none'] as const) {
       expect(MAP.squares.some((s) => s.region === region), region).toBe(true);
     }
   });
 
-  it('puts the porto at sea and the zona industrial on land', () => {
+  it('puts the porto at sea', () => {
     for (const s of MAP.squares.filter((x) => x.region === 'porto')) expect(s.terrain).toBe('sea');
-    for (const s of MAP.squares.filter((x) => x.region === 'industrial')) expect(s.terrain).toBe('land');
+  });
+
+  it('matches the dimensions read off the physical board', () => {
+    expect(MAP.columns).toBe(15);
+    expect(MAP.rows).toBe(10);
+    expect(MAP.verified).toBe(true);
+    expect(PROSPECTING_SQUARES).toHaveLength(85);
+    expect(PROSPECTING_SQUARES.filter((s) => s.terrain === 'land')).toHaveLength(47);
+    expect(PROSPECTING_SQUARES.filter((s) => s.terrain === 'sea')).toHaveLength(38);
+    expect(MAP.squares.filter((s) => s.region === 'porto')).toHaveLength(14);
+    expect(MAP.squares.filter((s) => s.region === 'panel')).toHaveLength(14);
   });
 
   it('supplies enough prospecting squares for every tower and reservoir in the box', () => {

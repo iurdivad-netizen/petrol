@@ -5,8 +5,7 @@
   "source": "Original Karto rules booklet, 'PETRÓLEO — REGRAS', 9pp A5, Fábrica de Jogos Karto, Rua Delfim Ferreira 698, Porto.",
   "complete": false,
   "incompleteBecause": [
-    "board.track (order of spaces)",
-    "board.map (geography)",
+    "board.track top and right edges",
     "cards.moveValues"
   ],
   "identity": {
@@ -497,14 +496,19 @@
       "blocks": "Physical square count around the map and which space type occupies each, plus which square sits opposite Passagem de Ano. Needs a board scan."
     },
     "map": {
-      "value": "partially resolved",
-      "confidence": "structure high / detail unknown",
-      "regionsOutsideTheGrid": [
-        "porto",
-        "zonaIndustrial",
-        "cardPanel"
-      ],
-      "note": "A board photograph confirms the prospecting grid does NOT cover the whole map. The porto (where a tanker sits on its owner's licence), the zona industrial (trucks — the booklet says explicitly 'fora dos quadrados de prospecção') and the printed card panel all lie outside it. Only the exact grid dimensions, coastline and region extents remain unread."
+      "value": "resolved",
+      "confidence": "high",
+      "source": "read cell by cell off the physical board by the project owner; validated by scripts/map-from-rows.mjs",
+      "columns": 15,
+      "rows": 10,
+      "totalCells": 150,
+      "prospectingSquares": 85,
+      "land": 47,
+      "sea": 38,
+      "porto": 14,
+      "cardPanel": 14,
+      "ungriddedIllustration": 37,
+      "openPoint": "The board has no separately gridded zona industrial — the refinery is drawn over the land. Trucks do not consume a licensable land square, since the booklet states the vehicle licence is free and places the truck outside the prospecting squares."
     },
     "markerDirection": "always around the map in the direction of the arrow"
   },
@@ -645,8 +649,8 @@
     },
     {
       "rule": "Map geography (land/sea, porto, zona industrial)",
-      "sourceConfidence": "structure high / detail unknown",
-      "implemented": "provisional",
+      "sourceConfidence": "high",
+      "implemented": true,
       "tested": true
     },
     {

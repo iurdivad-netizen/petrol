@@ -237,7 +237,9 @@ describe('bankruptcy and scoring (RULES.md §11)', () => {
     expect(s.players[0]!.hand).toHaveLength(0);
     applyAction(s, { type: 'drawCard' });
     // The engine must not be sitting in playCard with an empty hand.
-    expect(s.phase === 'playCard' && s.players[s.currentPlayer]!.hand.length === 0).toBe(false);
+    const stuck: boolean =
+      (s.phase as string) === 'playCard' && s.players[s.currentPlayer]!.hand.length === 0;
+    expect(stuck).toBe(false);
   });
 
   it('a bankrupt company cannot win', () => {

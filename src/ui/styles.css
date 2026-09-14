@@ -392,3 +392,13 @@ button.danger { background: var(--red); color: #fff; }
   letter-spacing: 0.3em;
   color: var(--ink);
 }
+
+/*
+ * Ungridded illustration: real map area that carries no prospecting square.
+ * Rendered as terrain without a cell border so the grid reads as it does on the
+ * board, where the lines simply stop.
+ */
+.site.none {
+  background: linear-gradient(160deg, #e0a94f, #caa066);
+  border-color: transparent;
+}

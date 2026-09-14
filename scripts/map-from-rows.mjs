@@ -80,7 +80,9 @@ for (const [ch, label] of [['P', 'porto'], ['X', 'card panel']]) {
   if (!counts[ch]) problems.push(`no ${label} cells found — the board has one`);
 }
 if (!counts.I) {
-  problems.push('no zona industrial cells found — trucks need somewhere to go');
+  // This board has no separately gridded industrial region — the refinery is
+  // drawn over the land. Worth noting, not worth failing on.
+  console.log('\nNote: no zona industrial cells. Trucks are displayed on ungridded land.');
 }
 if (counts['?']) {
   problems.push(`${counts['?']} cell(s) marked unread — resolve before setting MAP.verified`);

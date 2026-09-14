@@ -123,17 +123,19 @@ export const TRACK: { verified: boolean; width: number; height: number; cells: T
  *         X printed card panel
  */
 const MAP_LAYOUT = [
-  'SLLLLLLLLLL',
-  'SSLLLIIILLL',
-  'SSLLLIIILXX',
-  'SSLLLLSLLXX',
-  'SSPPPSSSLXX',
-  'SSPPPSSSLXX',
-  'SSSSSSSSSXX',
-  'SSSSSSSSSXX',
+  '..LLLLLLLLLLLLL',
+  'S.LLLLLLLLLLLLL',
+  'S.LL....LLLLLLL',
+  'S.L........LLXX',
+  'S.L..PPPP....XX',
+  'SLL.PPPPPP...XX',
+  'SLLSSSPPPP..LXX',
+  'S..SSSSSS...LXX',
+  'SSSSSSSSSSS.LXX',
+  'SSSSSSSSSSS.LXX',
 ] as const;
 
-export type MapRegion = 'prospecting' | 'porto' | 'industrial' | 'panel';
+export type MapRegion = 'prospecting' | 'porto' | 'industrial' | 'panel' | 'none';
 
 export interface MapSquare {
   id: string;
@@ -150,7 +152,8 @@ function classify(ch: string): { region: MapRegion; terrain: Terrain } {
     case 'S': return { region: 'prospecting', terrain: 'sea' };
     case 'P': return { region: 'porto', terrain: 'sea' };
     case 'I': return { region: 'industrial', terrain: 'land' };
-    default: return { region: 'panel', terrain: 'land' };
+    case 'X': return { region: 'panel', terrain: 'land' };
+    default: return { region: 'none', terrain: 'land' };
   }
 }
 
@@ -163,13 +166,30 @@ export const MAP: {
   rows: number;
   squares: MapSquare[];
 } = {
-  verified: false,
+  // Read cell by cell off the physical board by the project owner, validated by
+  // scripts/map-from-rows.mjs: ten rows of exactly fifteen.
+  verified: true,
   columns: MAP_COLUMNS,
   rows: MAP_ROWS,
   squares: MAP_LAYOUT.flatMap((line, row) =>
     [...line].map((ch, col) => ({ id: `s${col}-${row}`, col, row, ...classify(ch) })),
   ),
 };
+
+/**
+ * Where trucks are displayed.
+ *
+ * OPEN QUESTION, deliberately isolated here. The booklet places a truck "na
+ * zona industrial, FORA DOS QUADRADOS DE PROSPECÇÃO", but the board carries no
+ * separately gridded industrial region — the refinery is drawn over the land.
+ * So a truck must NOT consume a licensable land square (that would be a cost
+ * the booklet never mentions, and it says the vehicle licence is free), and
+ * these ungridded cells beside the land stand in for the industrial zone until
+ * the real ones are identified.
+ */
+export const INDUSTRIAL_DISPLAY_IDS: readonly string[] = [
+  's8-3', 's9-3', 's10-3', 's9-2', 's10-2',
+];
 
 /** The squares a company may actually licence and drill. */
 export const PROSPECTING_SQUARES = MAP.squares.filter((s) => s.region === 'prospecting');

@@ -49,8 +49,9 @@ Three things are printed on components rather than in the booklet:
 1. **Track layout** — how many physical squares surround the map, which of the 20 space
    types sits on each, and which square is opposite *Passagem de Ano* (needed for the
    second-payout rule at ≤4 players).
-2. **Map geography** — the count and arrangement of land vs sea prospecting squares, and
-   where the *porto* and *zona industrial* sit.
+2. ~~**Map geography**~~ — **resolved.** 10 × 15 = 150 cells: 85 prospecting
+   (47 land, 38 sea), 14 porto, 14 card panel, 37 plain illustration where the
+   grid simply stops.
 3. **Per-card move values** — the number of squares each of the 60 cards advances the
    marker.
 

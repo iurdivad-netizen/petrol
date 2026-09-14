@@ -4,7 +4,7 @@
  * TRACK.height, so correcting the board data reshapes the view automatically.
  */
 
-import { MAP, PASSAGEM_INDEX, SECOND_PASSAGEM_INDEX, TRACK } from '../data/board';
+import { INDUSTRIAL_DISPLAY_IDS, MAP, PASSAGEM_INDEX, SECOND_PASSAGEM_INDEX, TRACK } from '../data/board';
 import { SPACE_NAMES } from '../data/rules';
 import type { GameState, Site } from '../engine/types';
 
@@ -85,7 +85,11 @@ export function renderBoard(state: GameState, handlers: BoardHandlers = {}): HTM
   // Vehicles live outside the prospecting grid: tankers in the porto, trucks in
   // the zona industrial (RULES.md §8).
   const portoSquares = MAP.squares.filter((s) => s.region === 'porto');
-  const industrialSquares = MAP.squares.filter((s) => s.region === 'industrial');
+  // No separately gridded industrial region exists on this board; trucks are
+  // displayed on ungridded land beside it (see INDUSTRIAL_DISPLAY_IDS).
+  const industrialSquares = MAP.squares.filter(
+    (s) => s.region === 'industrial' || INDUSTRIAL_DISPLAY_IDS.includes(s.id),
+  );
   const tankers = state.vehicles.filter((v) => v.kind === 'tanker');
   const trucks = state.vehicles.filter((v) => v.kind === 'truck');
 
@@ -102,7 +106,17 @@ export function renderBoard(state: GameState, handlers: BoardHandlers = {}): HTM
       continue;
     }
 
-    if (square.region === 'porto' || square.region === 'industrial') {
+    const isIndustrialDisplay =
+      square.region === 'industrial' || INDUSTRIAL_DISPLAY_IDS.includes(square.id);
+
+    if (square.region === 'none' && !isIndustrialDisplay) {
+      el.className = 'site none';
+      el.title = 'Ilustração — sem quadrado de prospecção';
+      map.appendChild(el);
+      continue;
+    }
+
+    if (square.region === 'porto' || isIndustrialDisplay) {
       const isPorto = square.region === 'porto';
       el.className = `site ${isPorto ? 'porto' : 'industrial'}`;
       el.title = isPorto ? 'Porto — petroleiros' : 'Zona industrial — camiões cisterna';

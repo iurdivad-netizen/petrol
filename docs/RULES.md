@@ -277,13 +277,20 @@ the opportunity is lost.
    square is opposite *Passagem de Ano* (needed for the ≤4-player second-payout rule).
 2. **Per-card move values.** Each of the 60 cards is printed with the number of squares to
    advance. The booklet does not tabulate them.
-3. **Map geography.** The *structure* is now settled from a board photograph:
-   **the grid does not cover the whole map.** Three regions lie outside the
-   prospecting squares — the **porto** (tankers), the **zona industrial**
-   (trucks) and the printed card panel — which is exactly what the booklet
-   requires when it places a truck "na zona industrial, *fora dos quadrados de
-   prospecção*". What remains unresolved is the *detail*: the exact column and
-   row counts, the coastline, and the precise extent of each region.
+3. ~~**Map geography.**~~ **RESOLVED.** Read cell by cell off the physical
+   board by the project owner: **10 rows × 15 columns = 150 cells**, of which
+   **85 are prospecting squares** (47 land, 38 sea), 14 the **porto**, 14 the
+   printed **card panel**, and 37 plain illustration carrying no grid square at
+   all — the grid genuinely stops rather than continuing invisibly. Validated by
+   `scripts/map-from-rows.mjs`.
+
+   **One open point:** the board has no separately gridded *zona industrial*.
+   The refinery is drawn over the land, so the booklet's instruction to place a
+   truck "na zona industrial, *fora dos quadrados de prospecção*" has no
+   dedicated region to point at. Trucks therefore do **not** consume a
+   licensable land square — that would be a cost the booklet never mentions,
+   and it states the vehicle licence is free. Pending identification of the
+   refinery's exact cells, trucks display on ungridded land beside it.
 
 One value is now confirmed: a *camião cisterna* card carries **7**.
 
