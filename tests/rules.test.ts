@@ -6,7 +6,7 @@ import {
   DECK_COMPOSITION, PRICES, STARTING_CAPITAL, TURNS_PER_PLAYER,
 } from '../src/data/rules';
 import { buildDeck } from '../src/engine/setup';
-import { MAP, PROSPECTING_SQUARES, TRACK, SECOND_PASSAGEM_INDEX, PASSAGEM_INDEX } from '../src/data/board';
+import { MAP, PROSPECTING_SQUARES, TEAL_RUN_INDEX, TRACK, SECOND_PASSAGEM_INDEX, PASSAGEM_INDEX } from '../src/data/board';
 import { createGame } from '../src/engine/setup';
 
 const json = JSON.parse(readFileSync('data/petroleo.rules.json', 'utf8'));
@@ -72,12 +72,18 @@ describe('economy constants', () => {
 });
 
 describe('track invariants (observed on the board photograph)', () => {
-  it('cells strictly alternate teal and red', () => {
+  it('alternates teal and red everywhere but the board’s one anomaly', () => {
+    // The top edge carries a single 7 flanked by a 3 and a 5 — the only run of
+    // adjacent teal cells on the board. Confirmed against the physical board
+    // after the inferred pattern predicted a red space there.
     const isTeal = (space: number) => [1, 3, 5, 7].includes(space);
-    TRACK.cells.forEach((cell, i) => {
-      const prev = TRACK.cells[(i - 1 + TRACK.cells.length) % TRACK.cells.length]!;
-      expect(isTeal(cell.space), `cell ${i} (space ${cell.space})`).not.toBe(isTeal(prev.space));
-    });
+    const breaks = TRACK.cells
+      .map((cell, i) => {
+        const prev = TRACK.cells[(i - 1 + TRACK.cells.length) % TRACK.cells.length]!;
+        return isTeal(cell.space) === isTeal(prev.space) ? i : -1;
+      })
+      .filter((i) => i >= 0);
+    expect(breaks).toEqual([TEAL_RUN_INDEX, TEAL_RUN_INDEX + 1]);
   });
 
   it('teal cells are only ever the purchase spaces 3, 5, 7 (or Passagem de Ano)', () => {
@@ -87,14 +93,22 @@ describe('track invariants (observed on the board photograph)', () => {
     }
   });
 
-  it('runs the teal purchase spaces in an unbroken 3 → 5 → 7 cycle', () => {
-    // The strongest structure on the board, and it holds across all four edges.
-    // Index 0 is Passagem de Ano, which sits outside the cycle.
+  it('runs the teal purchase spaces in a 3 → 5 → 7 cycle, with one transposition', () => {
+    // Index 0 is Passagem de Ano, outside the cycle. The cycle is perfect for
+    // the first fifteen teal cells, then two read 7, 5 where 5, 7 would
+    // continue it, after which it resumes cleanly.
     const teal = TRACK.cells.filter((c, i) => i !== 0 && [1, 3, 5, 7].includes(c.space));
-    const cycle = [3, 5, 7];
-    teal.forEach((cell, i) => {
-      expect(cell.space, `teal cell ${i} at track index ${cell.index}`).toBe(cycle[i % 3]);
-    });
+    expect(teal.map((c) => c.space)).toEqual([
+      3, 5, 7, 3, 5, 7, 3, 5, 7, 3, 5, 7, 3, 5, 7,
+      3, 7, 5,
+      7, 3, 5, 7, 3, 5,
+    ]);
+  });
+
+  it('leaves the board with 25 teal and 23 red cells', () => {
+    const teal = TRACK.cells.filter((c) => [1, 3, 5, 7].includes(c.space));
+    expect(teal).toHaveLength(25);
+    expect(TRACK.cells.length - teal.length).toBe(23);
   });
 
   it('ascends the red spaces along the bottom and left edges only', () => {
@@ -115,10 +129,9 @@ describe('track invariants (observed on the board photograph)', () => {
     expect([...reds].sort((a, b) => a - b)).toEqual(expected);
   });
 
-  it('has exactly one cell still awaiting confirmation', () => {
-    const open = TRACK.cells.filter((c) => !c.verified);
-    expect(open).toHaveLength(1);
-    expect(open[0]!.edge).toBe('top');
+  it('has every cell confirmed against the physical board', () => {
+    expect(TRACK.cells.filter((c) => !c.verified)).toHaveLength(0);
+    expect(TRACK.verified).toBe(true);
   });
 
   it('the second Passagem de Ano sits exactly half a lap from the first', () => {

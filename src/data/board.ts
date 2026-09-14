@@ -51,17 +51,27 @@ export const PASSAGEM_INDEX = 0;
 export const SECOND_PASSAGEM_INDEX = WIDTH - 1 + (HEIGHT - 1);
 
 /**
- * Two invariants hold across the whole track and are enforced by tests:
+ * The track's structure, as read off the physical board. All 48 cells confirmed.
  *
- *  1. Cells strictly alternate teal and red. TEAL CELLS ARE ONLY EVER 3, 5 or
- *     7 — the three purchase spaces (sea licence, land licence, tower) — and
- *     they run in a strict repeating **3 -> 5 -> 7** cycle the whole way round,
- *     unbroken across all four edges. Every red cell is an event or tax space.
- *  2. The red spaces ascend only as far as the left edge: 2, 4, 6, 8, 9, 10,
- *     11 along the bottom, then 12 to 16 up the left side. The top and right
- *     edges do NOT continue the ascent — they introduce 17 to 20 and then
- *     repeat earlier values. An earlier reading of two edges suggested the
- *     ascent continued all the way round; the full board disproves it.
+ *  1. TEAL CELLS ARE ONLY EVER 3, 5 or 7 — the three purchase spaces (sea
+ *     licence, land licence, tower). Every red cell is an event or tax space.
+ *     This holds without exception.
+ *  2. Teal and red alternate, and the teal spaces run a repeating
+ *     **3 -> 5 -> 7** cycle — with exactly ONE exception on the whole board,
+ *     at track indices 32-34 on the top edge, which read 3, 7, 5. That is the
+ *     only place where teal cells sit adjacent, and it leaves the board with 25
+ *     teal and 23 red rather than an even 24/24.
+ *
+ *     The pattern would be perfect if those two cells were 5 then 7, so this is
+ *     either a printing quirk of the original or a transposition. It is
+ *     recorded as read: the owner checked it against the board after the
+ *     inferred pattern predicted otherwise, and the artefact outranks the
+ *     inference.
+ *  3. The red spaces ascend only as far as the left edge: 2, 4, 6, 8, 9, 10, 11
+ *     along the bottom, then 12 to 16 up the left side. The top and right edges
+ *     do not continue the ascent — they introduce 17 to 20 and then repeat
+ *     earlier values. An earlier reading of two edges suggested the ascent ran
+ *     the whole way round; the full board disproves it.
  *
  * All 16 possible red values appear somewhere on the track.
  */
@@ -80,15 +90,15 @@ const LEFT: number[] = [12, 5, 13, 7, 14, 3, 15, 5, 16];
  * property of the track index rather than the space number, so both hold at
  * once.
  *
- * One cell is still open: index 9 of this edge (the tenth number). It sits at a
- * red position — both neighbours are teal, and the 3-5-7 teal cycle runs
- * unbroken through every other cell on the board — so it cannot be a 7. The
- * value below is a PLACEHOLDER pending a re-read, and that single cell is
- * marked unverified.
+ * Index 9 of this edge is the board's one structural anomaly: a 7 flanked by a
+ * 3 and a 5, giving the only run of adjacent teal cells anywhere on the track.
+ * The inferred 3-5-7 cycle predicted a red space here; the owner re-checked the
+ * physical board and confirmed the 7, so it is recorded as read. See the
+ * structure note above.
  */
-const TOP: number[] = [7, 17, 3, 11, 5, 18, 7, 6, 3, 9, 5, 12, 7, 17, 3];
-/** Index into TOP of the one cell not yet confirmed. */
-const TOP_UNVERIFIED_INDEX = 9;
+const TOP: number[] = [7, 17, 3, 11, 5, 18, 7, 6, 3, 7, 5, 12, 7, 17, 3];
+/** Track index of the anomaly described above. */
+export const TEAL_RUN_INDEX = 33;
 /** Right edge, top-to-bottom, interior cells only. Read off the board. */
 const RIGHT: number[] = [8, 5, 17, 7, 19, 3, 20, 5, 20];
 
@@ -99,16 +109,14 @@ function buildTrack(): TrackCell[] {
 
   BOTTOM.forEach((s, i) => push2(s, 'bottom', i === 0 || i === BOTTOM.length - 1, true));
   LEFT.forEach((s) => push2(s, 'left', false, true));
-  TOP.forEach((s, i) =>
-    push2(s, 'top', i === 0 || i === TOP.length - 1, i !== TOP_UNVERIFIED_INDEX));
+  TOP.forEach((s, i) => push2(s, 'top', i === 0 || i === TOP.length - 1, true));
   RIGHT.forEach((s) => push2(s, 'right', false, true));
   return cells;
 }
 
 export const TRACK: { verified: boolean; width: number; height: number; cells: TrackCell[] } = {
-  // 47 of 48 cells read off the physical board and consistent with both
-  // invariants. See TOP_UNVERIFIED_INDEX for the one outstanding cell.
-  verified: false,
+  // All 48 cells read off the physical board.
+  verified: true,
   width: WIDTH,
   height: HEIGHT,
   cells: buildTrack(),

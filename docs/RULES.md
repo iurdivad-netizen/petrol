@@ -281,19 +281,24 @@ the opportunity is lost.
 
 ## 12. Remaining gaps — on the board and cards, not in the booklet
 
-1. ~~**Track length and layout.**~~ **ESSENTIALLY RESOLVED.** Read off the
-   physical board: a **15 × 11 border of 48 cells**, travelled anticlockwise
-   from *Passagem de Ano* at the bottom-right corner. **47 of 48 cells are
-   confirmed.** The one still open is the tenth cell of the top edge: it sits at
-   a red position between two teal cells, so it cannot be the 7 first read
-   there, and it currently holds a placeholder.
+1. ~~**Track length and layout.**~~ **RESOLVED.** Read off the physical board:
+   a **15 × 11 border of 48 cells**, travelled anticlockwise from *Passagem de
+   Ano* at the bottom-right corner. **All 48 cells confirmed.**
 
-   The board carries two strong structures, both now enforced by tests:
+   Structure, now enforced by tests:
 
-   - **The teal purchase spaces run in an unbroken 3 → 5 → 7 cycle** the whole
-     way round, across all four edges, without a single exception. This is the
-     tightest constraint on the board and it is what identified the one
-     misread cell.
+   - **Teal cells are only ever 3, 5 or 7** — the three purchase spaces. Every
+     red cell is an event or tax space. No exceptions.
+   - **The teal spaces run a repeating 3 → 5 → 7 cycle**, perfect for fifteen
+     cells, then two that read **7, 5** where **5, 7** would continue it, after
+     which it resumes cleanly. That is the board's single structural anomaly:
+     the only place where teal cells sit adjacent, leaving **25 teal and 23
+     red** rather than an even 24/24.
+
+     The inferred cycle predicted a red space there; the owner re-checked the
+     physical board and confirmed the 7. Recorded as read — the artefact
+     outranks the inference. Whether it is a printing quirk of the original or
+     a deliberate choice is unknown.
    - **The red event spaces ascend only along the bottom and left edges** —
      2, 4, 6, 8, 9, 10, 11, then 12 to 16. The top and right edges introduce
      17 to 20 and then repeat earlier values. An earlier reading of two edges
