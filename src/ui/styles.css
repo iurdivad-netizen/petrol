@@ -678,3 +678,19 @@ table.spaces .red-num { background: var(--red); }
 
 /* The reconstruction note is secondary once play has started. */
 .layout .banner { margin-bottom: 0; }
+
+/* "A sua conveniência": nineteen named board spaces, not a distance to move. */
+.actions.space-choice {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 6px;
+}
+.actions.space-choice button {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 10px;
+  border-left-width: 6px;
+}
+.actions.space-choice .teal-choice { border-left-color: var(--teal); }
+.actions.space-choice .red-choice { border-left-color: var(--red); }

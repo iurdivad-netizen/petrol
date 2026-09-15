@@ -493,9 +493,20 @@ function controls(s: GameState): HTMLElement {
 
   switch (pending.kind) {
     case 'chooseSpace':
-      prompt.textContent = 'A sua conveniência: escolha a casa que mais lhe interessar (1 a 19).';
+      // Bare numbers read as a distance to move. They are board spaces, and
+      // choosing one applies its effect where the marker already stands.
+      prompt.textContent =
+        'A sua conveniência: escolha o efeito de qualquer casa de 1 a 19. ' +
+        'O marcador não se move — só avança quando jogar a carta.';
+      actions.classList.add('space-choice');
       for (const n of pending.options) {
-        actions.appendChild(button(String(n), () => dispatch({ type: 'chooseSpace', space: n }), 'secondary'));
+        const b = button(
+          `${n} · ${SPACE_NAMES[n] ?? ''}`,
+          () => dispatch({ type: 'chooseSpace', space: n }),
+          'secondary',
+        );
+        b.classList.add([3, 5, 7].includes(n) ? 'teal-choice' : 'red-choice');
+        actions.appendChild(b);
       }
       break;
 

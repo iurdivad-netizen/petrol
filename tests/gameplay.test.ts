@@ -326,3 +326,52 @@ describe('choosing a company', () => {
     }
   });
 });
+
+describe('A sua conveniência (RULES.md §9, space 20)', () => {
+  it('pays every company when Passagem de Ano is the space chosen', () => {
+    // Regression: the annual payout is normally triggered by the marker
+    // CROSSING Passagem de Ano. Choosing it here involves no crossing, so
+    // picking space 1 paid nobody and appeared to do nothing at all.
+    const s = game(3);
+    s.currentPlayer = 0;
+    s.sites.filter((x) => x.terrain === 'land').slice(0, 3).forEach((site, i) => {
+      site.ownerId = i;
+      site.deposit = 'oil6MT';
+    });
+    const before = s.players.map((p) => p.cash);
+    const marker = s.markerPos;
+
+    s.phase = 'resolveSpace';
+    beginSpace(s, 20);
+    expect(s.pending.kind).toBe('chooseSpace');
+    expect(applyAction(s, { type: 'chooseSpace', space: 1 }).ok).toBe(true);
+
+    s.players.forEach((p, i) => expect(p.cash).toBe(before[i]! + 20));
+    // It is a space effect, not a move: the marker stays put.
+    expect(s.markerPos).toBe(marker);
+  });
+
+  it('applies any other space it is given', () => {
+    const s = game(3);
+    s.currentPlayer = 0;
+    const site = s.sites.find((x) => x.terrain === 'land')!;
+    site.ownerId = 0;
+    site.deposit = 'oil6MT';
+    const before = s.players[0]!.cash;
+
+    s.phase = 'resolveSpace';
+    beginSpace(s, 20);
+    // 14 is the oil price rise: 12 M for a 6 M.T. deposit.
+    applyAction(s, { type: 'chooseSpace', space: 14 });
+    expect(s.players[0]!.cash).toBe(before + 12);
+  });
+
+  it('offers a purchase when a purchase space is chosen', () => {
+    const s = game(3);
+    s.currentPlayer = 0;
+    s.phase = 'resolveSpace';
+    beginSpace(s, 20);
+    applyAction(s, { type: 'chooseSpace', space: 5 });
+    expect(s.pending.kind).toBe('optionalBuyLicence');
+  });
+});

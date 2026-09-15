@@ -251,6 +251,15 @@ export function applyAction(state: GameState, action: Action): ActionResult {
       if (action.space < 1 || action.space > 19) return fail('Casa inválida.');
       state.pending = { kind: 'none' };
       log(state, id, `A sua conveniência: escolheu a casa ${action.space} — ${SPACE_NAMES[action.space]}.`);
+
+      // Passagem de Ano normally pays because the marker CROSSED it. Choosing it
+      // here involves no crossing, so the payout has to be made explicitly —
+      // otherwise picking it did nothing at all.
+      if (action.space === 1) {
+        payAnnualProfits(state, 'A sua conveniência — Passagem de Ano');
+        afterSpace(state);
+        return ok;
+      }
       if (beginSpace(state, action.space)) afterSpace(state);
       return ok;
     }
