@@ -156,6 +156,17 @@ export const SPACE_NAMES: Record<number, string> = {
   20: 'A sua conveniência',
 };
 
+/**
+ * What each thing is called on the board. The booklet distinguishes them: oil
+ * goes into a *depósito* of a given capacity, gas into a *reservatório de gás*.
+ */
+export const DEPOSIT_NAMES: Record<DepositKind, string> = {
+  oil2MT: 'depósito de 2 M.T.',
+  oil4MT: 'depósito de 4 M.T.',
+  oil6MT: 'depósito de 6 M.T.',
+  gas: 'reservatório de gás',
+};
+
 export const CARD_NAMES: Record<CardType, string> = {
   torreOuLicenca: 'Compre 1 torre ou 1 licença',
   reservatorioGas: 'Reservatório de gás',

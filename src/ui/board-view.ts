@@ -4,8 +4,8 @@
  * TRACK.height, so correcting the board data reshapes the view automatically.
  */
 
-import { INDUSTRIAL_DISPLAY_IDS, MAP, PASSAGEM_INDEX, SECOND_PASSAGEM_INDEX, TRACK } from '../data/board';
-import { SPACE_NAMES } from '../data/rules';
+import { MAP, PASSAGEM_INDEX, SECOND_PASSAGEM_INDEX, TRACK } from '../data/board';
+import { DEPOSIT_NAMES, SPACE_NAMES } from '../data/rules';
 import { depositSvg, tankerSvg, towerSvg, truckSvg } from './pieces';
 import type { GameState, Site } from '../engine/types';
 
@@ -86,13 +86,11 @@ export function renderBoard(state: GameState, handlers: BoardHandlers = {}): HTM
   // Vehicles live outside the prospecting grid: tankers in the porto, trucks in
   // the zona industrial (RULES.md §8).
   const portoSquares = MAP.squares.filter((s) => s.region === 'porto');
-  // No separately gridded industrial region exists on this board; trucks are
-  // displayed on ungridded land beside it (see INDUSTRIAL_DISPLAY_IDS).
-  const industrialSquares = MAP.squares.filter(
-    (s) => s.region === 'industrial' || INDUSTRIAL_DISPLAY_IDS.includes(s.id),
-  );
   const tankers = state.vehicles.filter((v) => v.kind === 'tanker');
-  const trucks = state.vehicles.filter((v) => v.kind === 'truck');
+  // Trucks stand on their own land square rather than in a separate region.
+  const truckBySite = new Map(
+    state.vehicles.filter((v) => v.kind === 'truck' && v.siteId).map((v) => [v.siteId!, v]),
+  );
 
   for (const square of MAP.squares) {
     const el = document.createElement('div');
@@ -107,23 +105,20 @@ export function renderBoard(state: GameState, handlers: BoardHandlers = {}): HTM
       continue;
     }
 
-    const isIndustrialDisplay =
-      square.region === 'industrial' || INDUSTRIAL_DISPLAY_IDS.includes(square.id);
-
-    if (square.region === 'none' && !isIndustrialDisplay) {
+    if (square.region === 'none') {
       el.className = 'site none';
       el.title = 'Ilustração — sem quadrado de prospecção';
       map.appendChild(el);
       continue;
     }
 
-    if (square.region === 'porto' || isIndustrialDisplay) {
-      const isPorto = square.region === 'porto';
-      el.className = `site ${isPorto ? 'porto' : 'industrial'}`;
-      el.title = isPorto ? 'Porto — petroleiros' : 'Zona industrial — camiões cisterna';
+    if (square.region === 'porto') {
+      const isPorto = true;
+      el.className = 'site porto';
+      el.title = 'Porto — petroleiros';
 
-      const slot = (isPorto ? portoSquares : industrialSquares).indexOf(square);
-      const vehicle = (isPorto ? tankers : trucks)[slot];
+      const slot = portoSquares.indexOf(square);
+      const vehicle = tankers[slot];
       if (vehicle) {
         const lic = document.createElement('div');
         lic.className = 'licence';
@@ -149,7 +144,7 @@ export function renderBoard(state: GameState, handlers: BoardHandlers = {}): HTM
       } else if (slot === 0) {
         const label = document.createElement('span');
         label.className = 'region-label';
-        label.textContent = isPorto ? 'PORTO' : 'ZONA INDUSTRIAL';
+        label.textContent = 'PORTO';
         el.appendChild(label);
       }
       map.appendChild(el);
@@ -180,11 +175,19 @@ export function renderBoard(state: GameState, handlers: BoardHandlers = {}): HTM
       piece.title = 'Torre de prospecção';
       el.appendChild(piece);
     }
+    const truck = site ? truckBySite.get(site.id) : undefined;
+    if (truck) {
+      const piece = document.createElement('span');
+      piece.className = 'piece';
+      piece.innerHTML = truckSvg(companyColour(truck.ownerId));
+      piece.title = `Camião cisterna de ${state.players[truck.ownerId]?.company}`;
+      el.appendChild(piece);
+    }
     if (site?.deposit) {
       const piece = document.createElement('span');
       piece.className = 'piece';
       piece.innerHTML = depositSvg(site.deposit);
-      piece.title = site.deposit === 'gas' ? 'Reservatório de gás' : `Depósito de ${site.deposit.replace('oil', '')}`;
+      piece.title = DEPOSIT_NAMES[site.deposit];
       el.appendChild(piece);
     }
 

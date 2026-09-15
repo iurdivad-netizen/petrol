@@ -197,22 +197,7 @@ export const MAP: {
   ),
 };
 
-/**
- * Where trucks are displayed.
- *
- * OPEN QUESTION, deliberately isolated here. The booklet places a truck "na
- * zona industrial, FORA DOS QUADRADOS DE PROSPECÇÃO", but the board carries no
- * separately gridded industrial region — the refinery is drawn over the land.
- * So a truck must NOT consume a licensable land square (that would be a cost
- * the booklet never mentions, and it says the vehicle licence is free), and
- * these ungridded cells beside the land stand in for the industrial zone until
- * the real ones are identified.
- */
-export const INDUSTRIAL_DISPLAY_IDS: readonly string[] = [
-  's8-3', 's9-3', 's10-3', 's9-2', 's10-2',
-];
-
-/** The squares a company may actually licence and drill. */
+/** The squares a company may licence and drill. */
 export const PROSPECTING_SQUARES = MAP.squares.filter((s) => s.region === 'prospecting');
 
 /**

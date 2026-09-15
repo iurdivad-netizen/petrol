@@ -5,7 +5,8 @@ import { applyAction } from '../src/engine/engine';
 import { annualProfitFor, payBank, receiveFromBank, tally } from '../src/engine/economy';
 import { scorePlayer, winners } from '../src/engine/scoring';
 import { beginSpace } from '../src/engine/spaces';
-import { PRICES, STARTING_CAPITAL } from '../src/data/rules';
+import { COMPANIES, DEPOSIT_NAMES, PRICES, STARTING_CAPITAL } from '../src/data/rules';
+import { truckSiteAvailable } from '../src/engine/engine';
 import type { GameState } from '../src/engine/types';
 
 function game(players = 3, seed = 42): GameState {
@@ -103,7 +104,7 @@ describe('annual profits (RULES.md §8)', () => {
 
   it('pays a tanker venture half to each side', () => {
     const s = game(2);
-    s.vehicles.push({ id: 't1', kind: 'tanker', ownerId: 0, partner: 1 });
+    s.vehicles.push({ id: 't1', kind: 'tanker', siteId: null, ownerId: 0, partner: 1 });
     expect(annualProfitFor(s, 0)).toBe(50);
     expect(annualProfitFor(s, 1)).toBe(50);
   });
@@ -133,7 +134,7 @@ describe('nationalisation (RULES.md §9, spaces 13 and 17)', () => {
     const s = game(2);
     const site = giveLicence(s, 0, 'land');
     site.deposit = 'oil6MT';
-    s.vehicles.push({ id: 't', kind: 'tanker', ownerId: 0, partner: null });
+    s.vehicles.push({ id: 't', kind: 'tanker', siteId: null, ownerId: 0, partner: null });
     const plain = scorePlayer(s, 0);
     s.players[0]!.nationalised = true;
     const nat = scorePlayer(s, 0);
@@ -189,7 +190,7 @@ describe('bankruptcy and scoring (RULES.md §11)', () => {
     const s = game(2);
     const site = giveLicence(s, 0, 'land');
     site.tower = true;
-    s.vehicles.push({ id: 'tr', kind: 'truck', ownerId: 0, partner: null });
+    s.vehicles.push({ id: 'tr', kind: 'truck', ownerId: 0, siteId: null, partner: null });
     s.players[0]!.cash = 1;
     const towers = s.bank.towers;
 
@@ -230,7 +231,7 @@ describe('bankruptcy and scoring (RULES.md §11)', () => {
     site.deposit = 'oil6MT';
 
     beginSpace(s, 4); // Temporal — but no tanker, so nothing is owed
-    s.vehicles.push({ id: 'tk', kind: 'tanker', ownerId: 0, partner: null });
+    s.vehicles.push({ id: 'tk', kind: 'tanker', siteId: null, ownerId: 0, partner: null });
     beginSpace(s, 4); // now a 50 M repair against 1 M of cash
 
     expect(s.players[0]!.bankrupt).toBe(true);
@@ -247,5 +248,81 @@ describe('bankruptcy and scoring (RULES.md §11)', () => {
     s.players[0]!.bankrupt = true;
     s.players[0]!.cash = 0;
     expect(winners(s)).toEqual([1]);
+  });
+});
+
+describe('trucks stand on a land square (RULES.md §8)', () => {
+  it('licenses the square free and occupies it', () => {
+    // Regression: trucks were drawn in a made-up "industrial" strip of five
+    // cells, two of which sat on top of real prospecting squares — so only
+    // three slots existed for five trucks, and two land squares silently
+    // became unusable.
+    const s = game(3);
+    s.currentPlayer = 0;
+    const spot = s.sites.find((x) => x.terrain === 'land' && x.ownerId === null)!;
+    const before = s.players[0]!.cash;
+
+    s.phase = 'resolveCard';
+    s.pending = { kind: 'buyTruckChoice' };
+    expect(applyAction(s, { type: 'buyTruck', siteId: spot.id }).ok).toBe(true);
+
+    expect(spot.ownerId).toBe(0);            // licence comes with the truck
+    expect(s.players[0]!.cash).toBe(before - PRICES.truck); // and costs nothing
+    expect(s.vehicles.find((v) => v.kind === 'truck')?.siteId).toBe(spot.id);
+  });
+
+  it('leaves room for every truck in the box', () => {
+    const s = game(3);
+    const spots = s.sites.filter((x) => truckSiteAvailable(s, x, 0));
+    expect(spots.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it('refuses the sea, and squares already built on or occupied', () => {
+    const s = game(3);
+    s.currentPlayer = 0;
+    const sea = s.sites.find((x) => x.terrain === 'sea')!;
+    expect(truckSiteAvailable(s, sea, 0)).toBe(false);
+
+    const towered = s.sites.find((x) => x.terrain === 'land')!;
+    towered.ownerId = 0;
+    towered.tower = true;
+    expect(truckSiteAvailable(s, towered, 0)).toBe(false);
+
+    const taken = s.sites.filter((x) => x.terrain === 'land' && !x.tower)[1]!;
+    s.vehicles.push({ id: 't', kind: 'truck', siteId: taken.id, ownerId: 1, partner: null });
+    expect(truckSiteAvailable(s, taken, 0)).toBe(false);
+  });
+
+  it('a square holding a truck is not an idle licence to confiscate', () => {
+    const s = game(2);
+    s.currentPlayer = 0;
+    const spot = s.sites.find((x) => x.terrain === 'land' && x.ownerId === null)!;
+    spot.ownerId = 0;
+    s.vehicles.push({ id: 't', kind: 'truck', siteId: spot.id, ownerId: 0, partner: null });
+    s.passagemCount = 5;
+    beginSpace(s, 2);
+    expect(spot.ownerId).toBe(0);
+  });
+});
+
+describe('naming', () => {
+  it('calls gas a reservatório and oil a depósito', () => {
+    // Regression: gas was reported as "um depósito gas".
+    expect(DEPOSIT_NAMES.gas).toBe('reservatório de gás');
+    expect(DEPOSIT_NAMES.oil6MT).toContain('depósito');
+    for (const kind of ['oil2MT', 'oil4MT', 'oil6MT'] as const) {
+      expect(DEPOSIT_NAMES[kind]).not.toContain('reservatório');
+    }
+  });
+});
+
+describe('choosing a company', () => {
+  it('seats the chosen company first, whichever it is', () => {
+    for (const pick of COMPANIES) {
+      const ordered = [pick, ...COMPANIES.filter((c) => c !== pick)];
+      const s = createGame({ companies: ordered.slice(0, 4), seed: 1 });
+      expect(s.players[0]!.company).toBe(pick);
+      expect(new Set(s.players.map((p) => p.company)).size).toBe(4);
+    }
   });
 });

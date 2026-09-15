@@ -21,9 +21,19 @@ import {
 import { log, payBank, player, receiveFromBank, tally } from './economy';
 import type { GameState, PlayerId, Site } from './types';
 
-/** Licences bearing neither tower nor deposit — what space 2 confiscates. */
+/** True when a truck stands on this square, which reserves it. */
+export function siteOccupiedByVehicle(state: GameState, siteId: string): boolean {
+  return state.vehicles.some((v) => v.siteId === siteId);
+}
+
+/**
+ * Licences bearing neither tower nor deposit — what space 2 confiscates.
+ * A square holding a truck is in use, so it is not idle.
+ */
 export function idleLicences(state: GameState, id: PlayerId): Site[] {
-  return state.sites.filter((s) => s.ownerId === id && !s.tower && !s.deposit);
+  return state.sites.filter(
+    (s) => s.ownerId === id && !s.tower && !s.deposit && !siteOccupiedByVehicle(state, s.id),
+  );
 }
 
 /** Licences that could take a tower: owned, no tower, no deposit. */

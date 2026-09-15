@@ -540,7 +540,7 @@
       "porto": 14,
       "cardPanel": 14,
       "ungriddedIllustration": 37,
-      "openPoint": "The board has no separately gridded zona industrial — the refinery is drawn over the land. Trucks do not consume a licensable land square, since the booklet states the vehicle licence is free and places the truck outside the prospecting squares."
+      "openPoint": "Resolved: the board has no separately gridded zona industrial - the refinery is drawn over the land. A truck stands on a land square, on a licence of its company; buying one licenses that square free of charge, per the booklet's statement that the vehicle's licence is free and comes with it. The square is then occupied and cannot also be drilled."
     },
     "markerDirection": "always around the map in the direction of the arrow"
   },

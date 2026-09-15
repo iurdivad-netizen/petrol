@@ -13,7 +13,7 @@
  * choose their successor's. That is the central tension of the design.
  */
 
-import { CARD_DEPOSIT, CARD_NAMES, PRICES, SPACE_NAMES } from '../data/rules';
+import { CARD_DEPOSIT, CARD_NAMES, DEPOSIT_NAMES, PRICES, SPACE_NAMES } from '../data/rules';
 import { PASSAGEM_INDEX, SECOND_PASSAGEM_INDEX, TRACK } from '../data/board';
 import type { Action, ActionResult } from './actions';
 import {
@@ -24,7 +24,7 @@ import {
   player,
   receiveFromBank,
 } from './economy';
-import { beginSpace, surrenderSite, towerReadySites, toweredSites } from './spaces';
+import { beginSpace, siteOccupiedByVehicle, surrenderSite, towerReadySites, toweredSites } from './spaces';
 import { winners } from './scoring';
 import type { Card, DepositKind, GameState, PlayerId, Site } from './types';
 
@@ -33,6 +33,13 @@ const fail = (error: string): ActionResult => ({ ok: false, error });
 
 function site(state: GameState, siteId: string): Site | undefined {
   return state.sites.find((s) => s.id === siteId);
+}
+
+/** A truck may stand on any land square not already built on or occupied. */
+export function truckSiteAvailable(state: GameState, s: Site, id: PlayerId): boolean {
+  if (s.terrain !== 'land' || s.tower || s.deposit) return false;
+  if (siteOccupiedByVehicle(state, s.id)) return false;
+  return s.ownerId === null || s.ownerId === id;
 }
 
 function trackSpace(index: number): number {
@@ -300,6 +307,7 @@ export function applyAction(state: GameState, action: Action): ActionResult {
       if (state.pending.kind !== 'optionalBuyTower') return fail('Não pode comprar torre agora.');
       const s = site(state, action.siteId);
       if (!s || s.ownerId !== id || s.tower || s.deposit) return fail('Licença inválida.');
+      if (siteOccupiedByVehicle(state, s.id)) return fail('Há um camião neste quadrado.');
       const price = PRICES.tower[s.terrain];
       if (p.cash < price) return fail('Capital insuficiente.');
       if (state.bank.towers <= 0) return fail('Não há torres disponíveis.');
@@ -421,7 +429,7 @@ export function applyAction(state: GameState, action: Action): ActionResult {
       state.bank.towers += 1;
       s.deposit = deposit;
       state.bank[deposit] -= 1;
-      log(state, id, `Substituiu a torre por um depósito ${deposit} por ${price} M.`);
+      log(state, id, `Substituiu a torre por um ${DEPOSIT_NAMES[deposit]} por ${price} M.`);
       finishCard(state);
       return ok;
     }
@@ -439,6 +447,7 @@ export function applyAction(state: GameState, action: Action): ActionResult {
         log(state, id, `Comprou uma licença ${s.terrain === 'sea' ? 'no mar' : 'em terra'} por ${price} M.`);
       } else {
         if (s.ownerId !== id || s.tower || s.deposit) return fail('Precisa de uma licença livre sua.');
+        if (siteOccupiedByVehicle(state, s.id)) return fail('Há um camião neste quadrado.');
         const price = PRICES.tower[s.terrain];
         if (p.cash < price) return fail('Capital insuficiente.');
         if (state.bank.towers <= 0) return fail('Não há torres disponíveis.');
@@ -467,7 +476,7 @@ export function applyAction(state: GameState, action: Action): ActionResult {
       state.vehicles.push({
         id: `tanker-${state.vehicles.length}`,
         kind: 'tanker',
-        ownerId: id,
+        ownerId: id, siteId: null,
         partner,
       });
       const how = partner === null ? 'sozinho' : partner === 'bank' ? 'em sociedade com o banco' : `em sociedade com ${player(state, partner).company}`;
@@ -486,10 +495,23 @@ export function applyAction(state: GameState, action: Action): ActionResult {
       if (state.pending.kind !== 'buyTruckChoice') return fail('Não pode comprar camião agora.');
       if (state.bank.trucks <= 0) return fail('Não há camiões disponíveis.');
       if (p.cash < PRICES.truck) return fail('Capital insuficiente.');
+      const target = site(state, action.siteId);
+      if (!target || !truckSiteAvailable(state, target, id)) {
+        return fail('Escolha um quadrado em terra, livre de torre e depósito.');
+      }
       payBank(state, id, PRICES.truck);
       state.bank.trucks -= 1;
-      state.vehicles.push({ id: `truck-${state.vehicles.length}`, kind: 'truck', ownerId: id, partner: null });
-      log(state, id, `Comprou um camião cisterna por ${PRICES.truck} M.`);
+      // The booklet gives the vehicle's licence free, so the square is licensed
+      // to the buyer at no cost and the truck stands on it.
+      target.ownerId = id;
+      state.vehicles.push({
+        id: `truck-${state.vehicles.length}`,
+        kind: 'truck',
+        siteId: target.id,
+        ownerId: id,
+        partner: null,
+      });
+      log(state, id, `Comprou um camião cisterna por ${PRICES.truck} M e colocou-o em terra.`);
       finishCard(state);
       return ok;
     }

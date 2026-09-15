@@ -41,9 +41,15 @@ export function drive(s: GameState): void {
       case 'buyTankerChoice':
         if (!applyAction(s, { type: 'buyTanker', partner: null }).ok && !applyAction(s, { type: 'buyTanker', partner: 'bank' }).ok) applyAction(s, { type: 'declineTanker' });
         continue;
-      case 'buyTruckChoice':
-        if (!applyAction(s, { type: 'buyTruck' }).ok) applyAction(s, { type: 'declineTruck' });
+      case 'buyTruckChoice': {
+        const spot = s.sites.find((x) => x.terrain === 'land' && !x.tower && !x.deposit
+          && (x.ownerId === null || x.ownerId === id)
+          && !s.vehicles.some((v) => v.siteId === x.id));
+        if (!spot || !applyAction(s, { type: 'buyTruck', siteId: spot.id }).ok) {
+          applyAction(s, { type: 'declineTruck' });
+        }
         continue;
+      }
     }
     switch (s.phase) {
       case 'draw': applyAction(s, { type: 'drawCard' }); break;

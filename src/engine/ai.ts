@@ -30,7 +30,7 @@
 import { PASSAGEM_INDEX, SECOND_PASSAGEM_INDEX, TRACK } from '../data/board';
 import { ANNUAL_PROFIT, PRICES, SPACE_TARIFFS, SPACE_FLAT_COST } from '../data/rules';
 import type { Action } from './actions';
-import { actingPlayer, canAuction } from './engine';
+import { actingPlayer, canAuction, truckSiteAvailable } from './engine';
 import { annualProfitFor, tally } from './economy';
 import { idleLicences, toweredSites } from './spaces';
 import type { DepositKind, GameState, PlayerId, Site } from './types';
@@ -301,10 +301,15 @@ export function aiAction(state: GameState, config: AiConfig = AI_LEVELS.magnata!
     }
 
     case 'buyTruckChoice': {
-      if (netValue(PRICES.truck, ANNUAL_PROFIT.truck, years) > 0 && me.cash >= PRICES.truck * 2) {
-        return { type: 'buyTruck' };
+      if (netValue(PRICES.truck, ANNUAL_PROFIT.truck, years) <= 0 || me.cash < PRICES.truck * 2) {
+        return sellOrSkip(state);
       }
-      return sellOrSkip(state);
+      // Prefer a square already licensed — placing a truck there costs nothing
+      // extra, whereas an unowned square is only free because the truck brings
+      // its licence, and that square could have been drilled instead.
+      const owned = state.sites.find((x) => x.ownerId === me.id && truckSiteAvailable(state, x, me.id));
+      const any = owned ?? state.sites.find((x) => truckSiteAvailable(state, x, me.id));
+      return any ? { type: 'buyTruck', siteId: any.id } : sellOrSkip(state);
     }
   }
 

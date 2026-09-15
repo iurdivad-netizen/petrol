@@ -219,8 +219,10 @@ you may form a partnership:
 
 ### Trucks
 
-Place a company licence in the **zona industrial** — outside the prospecting squares — and
-a truck on top of it. Pay the bank 5.
+Place a company licence on a **land square** and the truck on top of it. The
+licence comes with the truck at no cost. Pay the bank 5 for the truck itself.
+The square is then in use: nothing else may be built there, and it does not
+count as an idle licence.
 
 ---
 
@@ -331,13 +333,15 @@ the opportunity is lost.
    all — the grid genuinely stops rather than continuing invisibly. Validated by
    `scripts/map-from-rows.mjs`.
 
-   **One open point:** the board has no separately gridded *zona industrial*.
-   The refinery is drawn over the land, so the booklet's instruction to place a
-   truck "na zona industrial, *fora dos quadrados de prospecção*" has no
-   dedicated region to point at. Trucks therefore do **not** consume a
-   licensable land square — that would be a cost the booklet never mentions,
-   and it states the vehicle licence is free. Pending identification of the
-   refinery's exact cells, trucks display on ungridded land beside it.
+   **The zona industrial, resolved.** The board has no separately gridded
+   industrial region — the refinery is drawn over the land — so the booklet's
+   "na zona industrial, *fora dos quadrados de prospecção*" has no dedicated
+   region to point at. Per the owner's reading of the physical board, **a truck
+   stands on a land square, on a licence of its company.** Buying one licenses
+   that square free of charge, which is exactly what the booklet means by "não
+   tem que pagar licença. Ela vem juntamente com o navio ou camião", and the
+   square is then occupied: it cannot also carry a tower or a deposit, and it
+   is not an idle licence for space 2 to confiscate.
 
 One value is now confirmed: a *camião cisterna* card carries **7**.
 

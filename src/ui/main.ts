@@ -7,12 +7,12 @@
  * without rendering anything.
  */
 
-import { actingPlayer, applyAction, canUseCard } from '../engine/engine';
+import { actingPlayer, applyAction, canUseCard, truckSiteAvailable } from '../engine/engine';
 import { createGame } from '../engine/setup';
 import { scoreboard } from '../engine/scoring';
 import { tally } from '../engine/economy';
 import { idleLicences, toweredSites } from '../engine/spaces';
-import { CARD_NAMES, COMPANIES, PRICES, SPACE_NAMES, SECOND_PASSAGEM_MAX_PLAYERS } from '../data/rules';
+import { ANNUAL_PROFIT, CARD_NAMES, COMPANIES, DEPOSIT_NAMES, PRICES, SPACE_NAMES, SECOND_PASSAGEM_MAX_PLAYERS } from '../data/rules';
 import { MAP, TRACK } from '../data/board';
 import { companyColour, renderBoard } from './board-view';
 import { priceCard, rulesContent } from './rules-view';
@@ -169,8 +169,11 @@ function renderSetup(): void {
         const second = n <= SECOND_PASSAGEM_MAX_PLAYERS && secondBox.checked;
         const humans = Math.min(Number(humanSelect.value), n);
         aiLevel = levelSelect.value as keyof typeof AI_LEVELS;
+        // The chosen company takes the first seat; the rest fill in order.
+        const chosenCompany = companySelect.value;
+        const ordered = [chosenCompany, ...COMPANIES.filter((c) => c !== chosenCompany)];
         state = createGame({
-          playerCount: n,
+          companies: ordered.slice(0, n),
           seed: Date.now() >>> 0,
           secondPassagem: second,
           // Humans take the first seats; the computer plays the rest.
@@ -184,6 +187,19 @@ function renderSetup(): void {
   panel.appendChild(row);
 
   const opts = el('div', 'setup-options');
+
+  const companyLabel = el('label');
+  companyLabel.append('A sua companhia ');
+  const companySelect = document.createElement('select');
+  companySelect.id = 'company';
+  for (const name of COMPANIES) {
+    const o = document.createElement('option');
+    o.value = name;
+    o.textContent = name;
+    companySelect.appendChild(o);
+  }
+  companyLabel.appendChild(companySelect);
+  opts.appendChild(companyLabel);
 
   const humanLabel = el('label');
   humanLabel.append('Jogadores humanos ');
@@ -337,6 +353,8 @@ function selectableSites(s: GameState): Set<string> {
       return new Set(idleLicences(s, id).map((x) => x.id));
     case 'placeDeposit':
       return new Set(toweredSites(s, id).map((x) => x.id));
+    case 'buyTruckChoice':
+      return new Set(s.sites.filter((x) => truckSiteAvailable(s, x, id)).map((x) => x.id));
     case 'surrenderTowerSite':
       return new Set(s.sites.filter((x) => x.ownerId === id && x.tower).map((x) => x.id));
     case 'towerOrLicenceChoice':
@@ -438,9 +456,9 @@ function controls(s: GameState): HTMLElement {
 
     case 'placeDeposit': {
       prompt.textContent =
-        `Substitua uma torre por um depósito ${pending.deposit} (custo ${PRICES[pending.deposit]} M). ` +
+        `Substitua uma torre por um ${DEPOSIT_NAMES[pending.deposit]} (custo ${PRICES[pending.deposit]} M). ` +
         'A torre volta ao banco.';
-      const b = button('Colocar depósito', () =>
+      const b = button(pending.deposit === 'gas' ? 'Colocar reservatório' : 'Colocar depósito', () =>
         dispatch({ type: 'placeDeposit', siteId: chosen[0]!, deposit: pending.deposit }));
       b.disabled = chosen.length !== 1;
       actions.append(b, negotiateButtons(s));
@@ -477,13 +495,15 @@ function controls(s: GameState): HTMLElement {
       break;
     }
 
-    case 'buyTruckChoice':
-      prompt.textContent = `Pode comprar um camião cisterna por ${PRICES.truck} M (lucro anual 5 M).`;
-      actions.append(
-        button('Comprar camião', () => dispatch({ type: 'buyTruck' })),
-        negotiateButtons(s),
-      );
+    case 'buyTruckChoice': {
+      prompt.textContent =
+        `Pode comprar um camião cisterna por ${PRICES.truck} M (lucro anual ${ANNUAL_PROFIT.truck} M). ` +
+        'Escolha o quadrado em terra onde o coloca — a licença vem com o camião.';
+      const b = button('Comprar camião', () => dispatch({ type: 'buyTruck', siteId: chosen[0]! }));
+      b.disabled = chosen.length !== 1;
+      actions.append(b, negotiateButtons(s));
       break;
+    }
 
     case 'confiscateLicences':
       prompt.textContent = `Confiscação: escolha ${pending.count} licenças suas que não estejam em exploração.`;
@@ -720,5 +740,4 @@ if (DEBUG) {
   };
 }
 
-void COMPANIES;
 render();

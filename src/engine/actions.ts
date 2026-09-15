@@ -23,7 +23,7 @@ export type Action =
   | { type: 'placeDeposit'; siteId: string; deposit: DepositKind }
   | { type: 'buyTanker'; partner: PlayerId | 'bank' | null }
   | { type: 'declineTanker' }
-  | { type: 'buyTruck' }
+  | { type: 'buyTruck'; siteId: string }
   | { type: 'declineTruck' }
   | { type: 'chooseSpace'; space: number }
   | { type: 'confiscate'; siteIds: string[] }

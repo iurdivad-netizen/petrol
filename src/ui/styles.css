@@ -609,6 +609,7 @@ table.spaces .red-num { background: var(--red); }
 }
 .setup-options select {
   font: inherit;
+  min-width: 9em;
   padding: 7px 10px;
   border: 2px solid var(--rule);
   border-radius: 5px;
@@ -616,6 +617,7 @@ table.spaces .red-num { background: var(--red); }
   color: var(--ink);
   text-transform: capitalize;
 }
+.setup-options #company { text-transform: none; font-weight: 700; }
 
 /* A turn being played by the computer, so the pause reads as deliberate. */
 .prompt.thinking {

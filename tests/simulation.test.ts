@@ -70,9 +70,15 @@ function step(s: GameState): void {
         }
       }
       return;
-    case 'buyTruckChoice':
-      if (!applyAction(s, { type: 'buyTruck' }).ok) applyAction(s, { type: 'declineTruck' });
+    case 'buyTruckChoice': {
+      const spot = s.sites.find((x) => x.terrain === 'land' && !x.tower && !x.deposit
+        && (x.ownerId === null || x.ownerId === id)
+        && !s.vehicles.some((v) => v.siteId === x.id));
+      if (!spot || !applyAction(s, { type: 'buyTruck', siteId: spot.id }).ok) {
+        applyAction(s, { type: 'declineTruck' });
+      }
       return;
+    }
   }
 
   switch (s.phase) {

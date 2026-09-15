@@ -44,10 +44,19 @@ export interface Site {
   deposit: DepositKind | null;
 }
 
-/** Tankers sit in the porto, trucks in the zona industrial (§8). */
+/**
+ * Tankers sit in the porto. Trucks stand on a land square of the map, on a
+ * licence of the owning company — the board has no separately gridded zona
+ * industrial, the refinery is drawn over the land. The booklet gives the
+ * vehicle's licence free ("não tem que pagar licença. Ela vem juntamente com o
+ * navio ou camião"), so buying a truck licenses its square at no cost, and that
+ * square is then occupied and cannot also be drilled.
+ */
 export interface Vehicle {
   id: string;
   kind: 'tanker' | 'truck';
+  /** Trucks only: the map square this truck stands on. */
+  siteId: string | null;
   /** Commanding licence holder — the one whose licence sits on top (§8). */
   ownerId: PlayerId;
   /**
