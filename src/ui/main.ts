@@ -40,6 +40,69 @@ let selected = new Set<string>();
 let notice = '';
 /** Narrow screens only: enlarge the board and scroll it instead of fitting it. */
 let boardZoomed = false;
+
+/**
+ * Event ticker across the top of the screen.
+ *
+ * Play moves faster than it can be read, especially with computer companies
+ * taking turns, so each new entry in the log is shown here for a second before
+ * the next. The full log in the side column is unchanged and remains the record;
+ * this only surfaces what just happened.
+ */
+const MESSAGE_MS = 1000;
+/** How far through state.log the ticker has already queued. */
+let tickerRead = 0;
+let tickerQueue: string[] = [];
+let tickerTimer: number | null = null;
+
+function tickerElement(): HTMLElement {
+  let bar = document.getElementById('ticker');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'ticker';
+    bar.className = 'ticker';
+    bar.setAttribute('role', 'status');
+    bar.setAttribute('aria-live', 'polite');
+    document.body.appendChild(bar);
+  }
+  return bar;
+}
+
+function pumpTicker(): void {
+  const bar = tickerElement();
+  const next = tickerQueue.shift();
+  if (next === undefined) {
+    bar.classList.remove('show');
+    tickerTimer = null;
+    return;
+  }
+  bar.textContent = next;
+  bar.classList.add('show');
+  tickerTimer = window.setTimeout(pumpTicker, MESSAGE_MS);
+}
+
+/** Queues anything logged since the last render. */
+function syncTicker(s: GameState): void {
+  if (tickerRead > s.log.length) tickerRead = 0; // a new or loaded game
+  for (const entry of s.log.slice(tickerRead)) {
+    const who = entry.playerId === null ? '' : `${s.players[entry.playerId]?.company}: `;
+    tickerQueue.push(`${who}${entry.message}`);
+  }
+  tickerRead = s.log.length;
+
+  // Play can outrun a one-second message, so keep only the most recent few
+  // rather than drifting further and further behind what is on the board.
+  if (tickerQueue.length > 5) tickerQueue = tickerQueue.slice(-5);
+  if (tickerTimer === null) pumpTicker();
+}
+
+function resetTicker(): void {
+  if (tickerTimer !== null) clearTimeout(tickerTimer);
+  tickerTimer = null;
+  tickerQueue = [];
+  tickerRead = 0;
+  tickerElement().classList.remove('show');
+}
 /** Difficulty for every computer company in the current game. */
 let aiLevel: keyof typeof AI_LEVELS = 'gestor';
 let aiTimer: number | null = null;
@@ -418,7 +481,12 @@ function controls(s: GameState): HTMLElement {
   if (s.phase === 'gameOver') {
     wrap.replaceChildren(el('h3', undefined, 'Fim do jogo'), scoreTable(s));
     const again = el('div', 'actions');
-    again.appendChild(button('Novo jogo', () => { localStorage.removeItem(SAVE_KEY); state = null; render(); }));
+    again.appendChild(button('Novo jogo', () => {
+      localStorage.removeItem(SAVE_KEY);
+      state = null;
+      resetTicker();
+      render();
+    }));
     wrap.appendChild(again);
     return wrap;
   }
@@ -660,7 +728,6 @@ function debugPanel(s: GameState): HTMLElement {
 
 function renderGame(s: GameState): void {
   app.replaceChildren();
-  app.appendChild(provisionalBanner());
 
   const layout = el('div', 'layout');
   const left = el('div');
@@ -672,10 +739,13 @@ function renderGame(s: GameState): void {
   zoomBar.append(el('span', 'muted', 'Tabuleiro:'));
 
   const wrap = el('div', `board-wrap${boardZoomed ? ' zoomed' : ''}`);
+  // Squares are only offered when a person is the one choosing: highlighting
+  // them while a computer company decides invites a click that does nothing.
+  const humanChoosing = !s.players[actingPlayer(s)]?.isAi;
   wrap.appendChild(
     renderBoard(s, {
       onSiteClick,
-      selectableSiteIds: selectableSites(s),
+      selectableSiteIds: humanChoosing ? selectableSites(s) : new Set<string>(),
       selectedSiteIds: selected,
     }),
   );
@@ -705,20 +775,29 @@ function renderGame(s: GameState): void {
       if (confirm('Recomeçar o jogo? O jogo guardado será apagado.')) {
         localStorage.removeItem(SAVE_KEY);
         state = null;
+        resetTicker();
         render();
       }
     }, 'danger'),
   );
   tools.appendChild(toolActions);
   right.appendChild(tools);
+  // The reconstruction note sits at the foot of the column: worth reading, but
+  // not before the board.
+  right.appendChild(provisionalBanner());
 
   layout.append(left, right);
   app.appendChild(layout);
 }
 
 function render(): void {
-  if (!state) renderSetup();
-  else renderGame(state);
+  if (!state) {
+    resetTicker();
+    renderSetup();
+    return;
+  }
+  renderGame(state);
+  syncTicker(state);
   scheduleAi();
 }
 

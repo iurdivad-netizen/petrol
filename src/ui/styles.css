@@ -642,3 +642,39 @@ table.spaces .red-num { background: var(--red); }
 @media (prefers-reduced-motion: reduce) {
   .prompt.thinking::before { animation: none; opacity: 0.8; }
 }
+
+/* ------------------------------------------------- event ticker, top of screen */
+
+.ticker {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -120%);
+  z-index: 50;
+  max-width: min(720px, calc(100vw - 24px));
+  padding: 10px 20px;
+  border: 2px solid var(--ochre);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  background: #15222c;
+  color: #f6ecd4;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  transition: transform 0.22s ease;
+  pointer-events: none;
+}
+.ticker.show { transform: translate(-50%, 0); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker { transition: none; }
+}
+
+@media (max-width: 900px) {
+  .ticker { font-size: 12px; padding: 8px 14px; max-width: calc(100vw - 16px); }
+}
+
+/* The reconstruction note is secondary once play has started. */
+.layout .banner { margin-bottom: 0; }
