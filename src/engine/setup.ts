@@ -31,8 +31,10 @@ export interface NewGameOptions {
   seed?: number;
   /** Optional second payout square; the booklet allows it at <=4 players (§8). */
   secondPassagem?: boolean;
-  /** Player ids played by the computer. */
+  /** Player ids played by the computer, as positions in `companies`. */
   aiPlayers?: number[];
+  /** Set false to seat the companies in the order given, for tests. */
+  randomOrder?: boolean;
 }
 
 /**
@@ -102,18 +104,42 @@ export function createGame(options: NewGameOptions = {}): GameState {
   rngState = shuffled.state;
   const deck = shuffled.items;
 
-  const players: Player[] = companies.map((company, id) => ({
-    id,
+  const seated: Player[] = companies.map((company, index) => ({
+    id: index,
     company,
     cash: STARTING_CAPITAL,
-    hand: deck.splice(0, STARTING_HAND),
+    hand: [],
     nationalised: false,
     duplicarUsed: false,
     turnsTaken: 0,
     bankrupt: false,
-    isAi: (options.aiPlayers ?? []).includes(id),
+    // aiPlayers names positions in the requested order, before seating.
+    isAi: (options.aiPlayers ?? []).includes(index),
     boughtPrivilege: null,
   }));
+
+  /*
+   * Seat the companies at random unless a fixed order is asked for.
+   *
+   * The booklet starts with the player to the banker's left. With no
+   * mechanical banker there is no such seat, so the order is drawn instead —
+   * and it matters more here than in most games: a card chooses the SUCCESSOR's
+   * square, so who follows whom is a standing strategic relationship, not just
+   * a question of who goes first.
+   */
+  let players = seated;
+  if (options.randomOrder !== false) {
+    const seating = shuffle(seated, rngState);
+    rngState = seating.state;
+    players = seating.items;
+    // Ids index into this array everywhere, so they follow the seating.
+    players.forEach((p, index) => {
+      p.id = index;
+    });
+  }
+
+  // Deal in seating order, once the table is settled.
+  for (const p of players) p.hand = deck.splice(0, STARTING_HAND);
 
   // Only prospecting squares become sites — the porto, the zona industrial and
   // the printed card panel lie outside the grid (see src/data/board.ts).
@@ -163,7 +189,8 @@ export function createGame(options: NewGameOptions = {}): GameState {
       {
         turn: 1,
         playerId: null,
-        message: `Jogo iniciado — ${companies.join(', ')}. Marcador na Passagem de Ano.${
+        message: `Jogo iniciado. Ordem à mesa: ${players.map((p) => p.company).join(' → ')}. ` +
+          `${players[0]?.company} começa.${
           TRACK.verified ? '' : ' (Percurso do tabuleiro provisório.)'
         }`,
       },

@@ -98,7 +98,7 @@
     "bankerGainsNoBenefit": true,
     "startingHandSize": 4,
     "startingCapital": 200,
-    "turnOrder": "clockwise",
+    "turnOrder": "clockwise; seating drawn at random, standing in for the booklet's \"player to the left of the banker\", since no mechanical banker exists digitally",
     "firstPlayer": "left of the banker",
     "markerStartsOn": "passagem-de-ano",
     "licencesAreBoughtNotDealt": true

@@ -128,7 +128,9 @@ describe('skill actually correlates with winning', () => {
 describe('auctions do not deadlock between the AI and a human', () => {
   /** Sets up a computer company offering a card it cannot use. */
   function aiOffersCard(): GameState {
-    const s = createGame({ playerCount: 3, seed: 11, aiPlayers: [1, 2] });
+    // Seating is pinned here: this tests the relationship between a computer
+    // seller and a human bidder, not who sits where.
+    const s = createGame({ playerCount: 3, seed: 11, aiPlayers: [1, 2], randomOrder: false });
     s.currentPlayer = 1;
     const site = s.sites.find((x) => x.terrain === 'land')!;
     site.ownerId = 1;
@@ -175,7 +177,7 @@ describe('auctions do not deadlock between the AI and a human', () => {
 
   it('never offers a card when there is no one left to buy it', () => {
     // offerCard is refused with no rivals, and a refused action stalls the AI.
-    const s = createGame({ playerCount: 2, seed: 12, aiPlayers: [0, 1] });
+    const s = createGame({ playerCount: 2, seed: 12, aiPlayers: [0, 1], randomOrder: false });
     s.players[1]!.bankrupt = true;
     s.currentPlayer = 0;
     const site = s.sites.find((x) => x.terrain === 'land')!;

@@ -317,13 +317,51 @@ describe('naming', () => {
 });
 
 describe('choosing a company', () => {
-  it('seats the chosen company first, whichever it is', () => {
+  it('gives the chosen company to the player, wherever they are seated', () => {
     for (const pick of COMPANIES) {
       const ordered = [pick, ...COMPANIES.filter((c) => c !== pick)];
-      const s = createGame({ companies: ordered.slice(0, 4), seed: 1 });
-      expect(s.players[0]!.company).toBe(pick);
+      // Position 0 of the requested order is the person; the rest are computers.
+      const s = createGame({ companies: ordered.slice(0, 4), seed: 1, aiPlayers: [1, 2, 3] });
+      const mine = s.players.filter((p) => !p.isAi);
+      expect(mine).toHaveLength(1);
+      expect(mine[0]!.company).toBe(pick);
       expect(new Set(s.players.map((p) => p.company)).size).toBe(4);
     }
+  });
+});
+
+describe('seating order (RULES.md §5)', () => {
+  it('draws the order rather than always starting with the same company', () => {
+    // The booklet starts with the player to the banker's left. With no
+    // mechanical banker the order is drawn instead — and it matters here,
+    // because a card chooses the SUCCESSOR's square.
+    const firsts = new Set<string>();
+    const neighbours = new Set<string>();
+    for (let seed = 1; seed <= 40; seed++) {
+      const s = createGame({ playerCount: 4, seed });
+      firsts.add(s.players[0]!.company);
+      neighbours.add(`${s.players[0]!.company}>${s.players[1]!.company}`);
+      expect(new Set(s.players.map((p) => p.company)).size).toBe(4);
+      s.players.forEach((p, i) => expect(p.id).toBe(i));
+    }
+    expect(firsts.size).toBeGreaterThan(1);
+    // Who follows whom varies too, not merely who leads.
+    expect(neighbours.size).toBeGreaterThan(2);
+  });
+
+  it('keeps each company’s own hand and controller through the seating', () => {
+    const s = createGame({ playerCount: 4, seed: 3, aiPlayers: [1, 2, 3] });
+    expect(s.players.filter((p) => p.isAi)).toHaveLength(3);
+    expect(s.players.filter((p) => !p.isAi)).toHaveLength(1);
+    for (const p of s.players) expect(p.hand).toHaveLength(4);
+    // No card is dealt twice.
+    const dealt = s.players.flatMap((p) => p.hand.map((c) => c.id));
+    expect(new Set(dealt).size).toBe(dealt.length);
+  });
+
+  it('honours a fixed order when asked for one', () => {
+    const s = createGame({ playerCount: 4, seed: 1, randomOrder: false });
+    expect(s.players.map((p) => p.company)).toEqual(COMPANIES.slice(0, 4));
   });
 });
 

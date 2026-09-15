@@ -80,6 +80,12 @@ identifies who owns a square, a tanker or a truck.
    Company licence sheets are *not* dealt out — licences are bought as needed.
 6. The blue marker starts on **Passagem de Ano**.
 
+**Seating.** The booklet starts with the player to the banker's left. With no
+mechanical banker there is no such seat, so the order is **drawn at random**
+instead. That matters more here than in most games: a card chooses the
+*successor's* square, so who follows whom is a standing strategic relationship,
+not merely a question of who leads.
+
 ---
 
 ## 4. Deck composition by player count
