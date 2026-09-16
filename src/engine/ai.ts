@@ -33,7 +33,7 @@ import type { Action } from './actions';
 import { actingPlayer, canAuction, truckSiteAvailable } from './engine';
 import { annualProfitFor, tally } from './economy';
 import { idleLicences, toweredSites } from './spaces';
-import type { DepositKind, GameState, PlayerId, Site } from './types';
+import type { CardType, DepositKind, GameState, PlayerId, Site } from './types';
 
 export interface AiConfig {
   /** 0 plays at random among legal moves; 1 always takes its best judgement. */
@@ -160,6 +160,98 @@ function sellOrSkip(state: GameState): Action {
   return canAuction(state) ? { type: 'offerCard' } : { type: 'skipCard' };
 }
 
+/** The deposit a reservoir card places, if it is one. */
+function depositOf(type: CardType): DepositKind | null {
+  switch (type) {
+    case 'reservatorioGas': return 'gas';
+    case 'reservatorio6MT': return 'oil6MT';
+    case 'reservatorio4MT': return 'oil4MT';
+    case 'reservatorio2MT': return 'oil2MT';
+    default: return null;
+  }
+}
+
+/**
+ * What exercising this card is worth to a company, net of the bank's price.
+ * Zero when they could not use it at all — which is what makes selling obvious.
+ */
+export function cardUseValue(
+  state: GameState,
+  id: PlayerId,
+  type: CardType,
+  years: number,
+): number {
+  const p = state.players[id];
+  if (!p) return 0;
+
+  const deposit = depositOf(type);
+  if (deposit) {
+    // Worthless without a tower standing ready to be replaced.
+    if (toweredSites(state, id).length === 0) return 0;
+    if (p.cash < PRICES[deposit]) return 0;
+    return Math.max(0, netValue(PRICES[deposit], ANNUAL_PROFIT[deposit], years));
+  }
+  switch (type) {
+    case 'petroleiro': {
+      if (state.bank.tankers <= 0) return 0;
+      const solo = netValue(PRICES.tanker, ANNUAL_PROFIT.tanker, years);
+      const shared = netValue(PRICES.tanker / 2, ANNUAL_PROFIT.tanker / 2, years);
+      if (p.cash >= PRICES.tanker) return Math.max(0, solo, shared);
+      if (p.cash >= PRICES.tanker / 2) return Math.max(0, shared);
+      return 0;
+    }
+    case 'camiaoCisterna': {
+      if (state.bank.trucks <= 0 || p.cash < PRICES.truck) return 0;
+      const room = state.sites.some((x) => truckSiteAvailable(state, x, id));
+      return room ? Math.max(0, netValue(PRICES.truck, ANNUAL_PROFIT.truck, years)) : 0;
+    }
+    case 'torreOuLicenca': {
+      if (p.cash < PRICES.licence.sea) return 0;
+      return Math.max(0, developmentUpside('land', years)) * 0.4;
+    }
+  }
+  return 0;
+}
+
+/**
+ * The highest a rival would go for this card. A bid is only ever a slice of the
+ * bidder's own surplus, so this is also a fair estimate of what selling raises.
+ */
+function bestRivalBid(
+  state: GameState,
+  sellerId: PlayerId,
+  type: CardType,
+  years: number,
+  config: AiConfig,
+): number {
+  let best = 0;
+  for (const rival of state.players) {
+    if (rival.id === sellerId || rival.bankrupt) continue;
+    best = Math.max(best, bidAmount(state, rival.id, type, years, config));
+  }
+  return best;
+}
+
+/**
+ * Whether to sell rather than use. A card worth little here and much across the
+ * table is worth more as cash than as a purchase — but selling also arms a
+ * rival, so the price has to beat keeping it by a real margin, not a rounding.
+ */
+function shouldSell(state: GameState, type: CardType, years: number, config: AiConfig): boolean {
+  // A bought privilege is not a card in the discard and cannot be re-offered.
+  if (state.exercisingPrivilege || !canAuction(state)) return false;
+  const mine = cardUseValue(state, state.currentPlayer, type, years);
+  const offered = bestRivalBid(state, state.currentPlayer, type, years, config);
+  if (offered <= 0) return false;
+  // The margin is the cost of helping whoever buys it.
+  return offered > mine + Math.max(4, mine * 0.35);
+}
+
+/** The card currently played and awaiting a decision. */
+function cardInPlay(state: GameState): CardType | null {
+  return state.discard[state.discard.length - 1]?.type ?? null;
+}
+
 interface CardChoice {
   cardId: string;
   score: number;
@@ -216,6 +308,16 @@ export function aiAction(state: GameState, config: AiConfig = AI_LEVELS.magnata!
   const years = yearsRemaining(state);
   const roll = () => Math.random() > config.skill;
 
+  /*
+   * Before exercising a card, weigh selling it. A card worth little here and
+   * much across the table raises more as cash than it returns as a purchase —
+   * so the AI puts it up for auction instead of using it, which is how the
+   * booklet expects cards to circulate.
+   */
+  const played = cardInPlay(state);
+  const sellFirst =
+    played !== null && !roll() && shouldSell(state, played, years, config);
+
   switch (state.pending.kind) {
     case 'chooseSpace': {
       // Free pick of any space: take whichever is worth most to us right now.
@@ -265,6 +367,7 @@ export function aiAction(state: GameState, config: AiConfig = AI_LEVELS.magnata!
     }
 
     case 'placeDeposit': {
+      if (sellFirst) return { type: 'offerCard' };
       const deposit: DepositKind = state.pending.deposit;
       const site = toweredSites(state, me.id)[0];
       if (!site) return { type: 'skipCard' };
@@ -278,6 +381,7 @@ export function aiAction(state: GameState, config: AiConfig = AI_LEVELS.magnata!
     }
 
     case 'towerOrLicenceChoice': {
+      if (sellFirst) return { type: 'offerCard' };
       // Tower first when we already hold idle land: it is the step that turns
       // a dead licence into something a reservoir card can finish.
       const tower = bestTowerSite(state, me.id);
@@ -292,6 +396,7 @@ export function aiAction(state: GameState, config: AiConfig = AI_LEVELS.magnata!
     }
 
     case 'buyTankerChoice': {
+      if (sellFirst) return { type: 'offerCard' };
       // 300 M against 100 M a year: it breaks even at three years and not before.
       const solo = netValue(PRICES.tanker, ANNUAL_PROFIT.tanker, years);
       const shared = netValue(PRICES.tanker / 2, ANNUAL_PROFIT.tanker / 2, years);
@@ -301,6 +406,7 @@ export function aiAction(state: GameState, config: AiConfig = AI_LEVELS.magnata!
     }
 
     case 'buyTruckChoice': {
+      if (sellFirst) return { type: 'offerCard' };
       if (netValue(PRICES.truck, ANNUAL_PROFIT.truck, years) <= 0 || me.cash < PRICES.truck * 2) {
         return sellOrSkip(state);
       }
@@ -350,45 +456,46 @@ export function aiAction(state: GameState, config: AiConfig = AI_LEVELS.magnata!
 }
 
 /**
- * Auction bidding. The AI bids only for what it can actually use, and never
- * more than the item is worth to it after also paying the bank's price.
+ * What a company would bid for a card: a slice of its own surplus, so the
+ * seller is paid and the buyer still profits. Zero means it would pass — it
+ * bids only for what it can actually use.
+ */
+function bidAmount(
+  state: GameState,
+  bidder: PlayerId,
+  type: CardType,
+  years: number,
+  config: AiConfig,
+): number {
+  const p = state.players[bidder];
+  if (!p || p.bankrupt) return 0;
+
+  // What the card is worth to them, before the bank's price for the item.
+  const use = cardUseValue(state, bidder, type, years);
+  if (use <= 0) return 0;
+
+  // Never bid more than the surplus, and never so much that the bank's price
+  // becomes unaffordable afterwards.
+  const deposit = depositOf(type);
+  const bankPrice =
+    deposit ? PRICES[deposit]
+    : type === 'petroleiro' ? PRICES.tanker / 2
+    : type === 'camiaoCisterna' ? PRICES.truck
+    : PRICES.tower.land;
+  if (p.cash < bankPrice * 2) return 0;
+
+  const headroom = Math.min(use, p.cash - bankPrice);
+  if (headroom <= 1) return 0;
+  return Math.max(1, Math.floor(Math.min(headroom * 0.5, p.cash * 0.2) * config.skill));
+}
+
+/**
+ * Auction bidding, out of turn.
  */
 function auctionBid(state: GameState, bidder: PlayerId, config: AiConfig): Action {
   const auction = state.auction!;
-  const p = state.players[bidder]!;
-  const years = yearsRemaining(state);
-  const pass: Action = { type: 'passBid', playerId: bidder };
-
-  let worth = 0;
-  let bankPrice = 0;
-  switch (auction.card.type) {
-    case 'petroleiro':
-      worth = netValue(0, ANNUAL_PROFIT.tanker / 2, years);
-      bankPrice = PRICES.tanker / 2;
-      break;
-    case 'camiaoCisterna':
-      worth = netValue(0, ANNUAL_PROFIT.truck, years);
-      bankPrice = PRICES.truck;
-      break;
-    case 'torreOuLicenca':
-      worth = Math.max(0, developmentUpside('land', years)) * 0.4;
-      bankPrice = PRICES.tower.land;
-      break;
-    default: {
-      const kind = auction.card.type === 'reservatorioGas' ? 'gas'
-        : auction.card.type === 'reservatorio6MT' ? 'oil6MT'
-        : auction.card.type === 'reservatorio4MT' ? 'oil4MT' : 'oil2MT';
-      // Worthless without a tower standing ready.
-      if (toweredSites(state, bidder).length === 0) return pass;
-      worth = ANNUAL_PROFIT[kind] * years;
-      bankPrice = PRICES[kind];
-    }
-  }
-
-  const headroom = worth - bankPrice;
-  if (headroom <= 1 || p.cash < bankPrice * 2) return pass;
-
-  // Bid a fraction of the surplus, so the seller is paid but the buyer profits.
-  const amount = Math.max(1, Math.floor(Math.min(headroom * 0.5, p.cash * 0.2) * config.skill));
-  return amount >= 1 ? { type: 'bid', playerId: bidder, amount } : pass;
+  const amount = bidAmount(state, bidder, auction.card.type, yearsRemaining(state), config);
+  return amount >= 1
+    ? { type: 'bid', playerId: bidder, amount }
+    : { type: 'passBid', playerId: bidder };
 }

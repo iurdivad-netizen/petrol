@@ -564,7 +564,8 @@ function settleAuction(state: GameState): ActionResult {
   seller.cash += amount;
   // The buyer still owes the bank the item's own price when they exercise it (§6).
   buyer.boughtPrivilege = a.card;
-  log(state, buyerId, `${buyer.company} comprou a regalia a ${seller.company} por ${amount} M.`);
+  // The log already prefixes the acting company, so do not repeat it here.
+  log(state, buyerId, `Comprou a regalia a ${seller.company} por ${amount} M.`);
   finishCard(state);
   return ok;
 }

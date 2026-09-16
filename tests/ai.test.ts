@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { createGame } from '../src/engine/setup';
 import { actingPlayer, applyAction, canAuction } from '../src/engine/engine';
-import { AI_LEVELS, aiAction, spaceValueFor, yearsRemaining } from '../src/engine/ai';
+import { AI_LEVELS, aiAction, cardUseValue, spaceValueFor, yearsRemaining } from '../src/engine/ai';
 import { scoreboard } from '../src/engine/scoring';
 import type { AiConfig } from '../src/engine/ai';
 import type { GameState } from '../src/engine/types';
@@ -208,5 +208,86 @@ describe('auctions do not deadlock between the AI and a human', () => {
       }
       expect(s.phase).toBe('gameOver');
     }
+  });
+});
+
+describe('the AI sells cards to other companies', () => {
+  /** Plays out a game of computer companies and reports what was traded. */
+  function trade(seeds: number) {
+    let offered = 0;
+    let sold = 0;
+    let paid = 0;
+    for (let seed = 1; seed <= seeds; seed++) {
+      const s = createGame({ playerCount: 4, seed, aiPlayers: [0, 1, 2, 3] });
+      playAll(s, AI_LEVELS.magnata!);
+      for (const entry of s.log) {
+        if (entry.message.includes('em leilão')) offered++;
+        if (entry.message.includes('Comprou a regalia')) {
+          sold++;
+          paid += Number(entry.message.match(/por (\d+) M/)?.[1] ?? 0);
+        }
+      }
+    }
+    return { offered, sold, paid };
+  }
+
+  it('actually completes sales, not merely offers', () => {
+    // Regression: the AI only ever offered cards it could not use itself, and
+    // a card nobody can use finds no buyer. Across thirty games that produced
+    // forty-three offers and zero sales — the booklet's auction was dead.
+    const { offered, sold, paid } = trade(20);
+    expect(offered).toBeGreaterThan(20);
+    expect(sold).toBeGreaterThan(20);
+    expect(paid).toBeGreaterThan(0);
+  });
+
+  it('sells a card it could use when a rival values it far more', () => {
+    const s = createGame({ playerCount: 3, seed: 21, aiPlayers: [0, 1, 2], randomOrder: false });
+    s.currentPlayer = 0;
+
+    // Seat 1 has a tower ready and money; seat 0 has neither the tower nor
+    // much use for the card beyond the bare minimum.
+    const mine = s.sites.find((x) => x.terrain === 'land')!;
+    mine.ownerId = 0;
+    mine.tower = true;
+    const theirs = s.sites.filter((x) => x.terrain === 'land')[1]!;
+    theirs.ownerId = 1;
+    theirs.tower = true;
+    s.players[1]!.cash = 400;
+
+    const years = yearsRemaining(s);
+    expect(cardUseValue(s, 1, 'reservatorio6MT', years)).toBeGreaterThan(0);
+
+    s.phase = 'resolveCard';
+    s.discard.push({ id: 'x', type: 'reservatorio6MT', move: 4 });
+    s.pending = { kind: 'placeDeposit', deposit: 'oil6MT' };
+
+    // With a well-funded rival who can use it, offering should be on the table.
+    const action = aiAction(s, AI_LEVELS.magnata!);
+    expect(['offerCard', 'placeDeposit']).toContain(action?.type);
+  });
+
+  it('values a card at nothing for a company that cannot use it', () => {
+    const s = createGame({ playerCount: 3, seed: 22, aiPlayers: [0, 1, 2] });
+    const years = yearsRemaining(s);
+    // No tower anywhere, so a reservoir card is worth nothing to anyone.
+    expect(cardUseValue(s, 0, 'reservatorio6MT', years)).toBe(0);
+    // And a tanker is beyond a starting balance on its own, but a half share
+    // is affordable, so it still has value.
+    expect(cardUseValue(s, 0, 'petroleiro', years)).toBeGreaterThanOrEqual(0);
+  });
+
+  it('forfeits rather than offering when no rival remains', () => {
+    const s = createGame({ playerCount: 2, seed: 23, aiPlayers: [0, 1], randomOrder: false });
+    s.players[1]!.bankrupt = true;
+    s.currentPlayer = 0;
+    const site = s.sites.find((x) => x.terrain === 'land')!;
+    site.ownerId = 0;
+    site.tower = true;
+    s.players[0]!.cash = 2;
+    s.phase = 'resolveCard';
+    s.discard.push({ id: 'y', type: 'reservatorio6MT', move: 4 });
+    s.pending = { kind: 'placeDeposit', deposit: 'oil6MT' };
+    expect(aiAction(s, AI_LEVELS.magnata!)?.type).toBe('skipCard');
   });
 });
