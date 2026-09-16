@@ -120,7 +120,8 @@ export function bankrupt(state: GameState, id: PlayerId): void {
     return true;
   });
   p.hand = [];
-  log(state, id, `${p.company} ficou sem dinheiro e abandona o jogo.`);
+  // The log prefixes the company, so the message names only what happened.
+  log(state, id, 'Ficou sem dinheiro e abandona o jogo.');
 }
 
 export interface AssetTally {
