@@ -115,12 +115,15 @@ h1, h2, h3 { margin: 0 0 8px; letter-spacing: 0.04em; }
 }
 .cell .marker {
   position: absolute;
-  inset: auto 2px 2px auto;
-  width: 14px; height: 14px;
+  inset: auto 3px 3px auto;
+  /* Sized from the cell so it stays proportionate as the board scales. */
+  width: 42%;
+  aspect-ratio: 1;
+  min-width: 16px;
   border-radius: 50%;
-  background: #1447d6;
-  border: 2px solid #fff;
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
+  background: radial-gradient(circle at 34% 30%, #4d7ef0, #0f2f9e 70%);
+  border: 2.5px solid #fff;
+  box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.55), 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 .cell.current { outline: 3px solid #fff; outline-offset: -3px; z-index: 2; }
 
@@ -217,8 +220,8 @@ h1, h2, h3 { margin: 0 0 8px; letter-spacing: 0.04em; }
  * across the middle, and "AVANCE (n) CASAS" down the right edge.
  */
 .card {
-  width: 118px;
-  min-height: 168px;
+  width: 148px;
+  min-height: 176px;
   background: #fbf7ec;
   border: 1px solid #9d9384;
   border-radius: 10px;
@@ -226,7 +229,7 @@ h1, h2, h3 { margin: 0 0 8px; letter-spacing: 0.04em; }
   font-size: 11px;
   cursor: pointer;
   display: grid;
-  grid-template-columns: 22px 1fr 22px;
+  grid-template-columns: 20px minmax(0, 1fr) 20px;
   gap: 3px;
   text-align: center;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
@@ -237,7 +240,7 @@ h1, h2, h3 { margin: 0 0 8px; letter-spacing: 0.04em; }
 
 .card .edge {
   writing-mode: vertical-rl;
-  font-size: 7px;
+  font-size: 6.5px;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -257,15 +260,23 @@ h1, h2, h3 { margin: 0 0 8px; letter-spacing: 0.04em; }
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 4px 3px;
+  padding: 4px 4px;
+  /* Without this a long word like RESERVATÓRIO refuses to shrink and spills
+     straight through the card's frame. */
+  min-width: 0;
+  overflow: hidden;
 }
 .card .karto { font-size: 7px; letter-spacing: 0.14em; color: #6b6b6b; text-transform: uppercase; }
 .card .title {
   font-weight: 700;
-  line-height: 1.25;
-  font-size: 12px;
+  line-height: 1.2;
+  /* Sized so the longest title, RESERVATÓRIO, sits on one line. */
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
+  /* Safety net only: a word should break rather than escape the card. */
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 .card .pip {
   display: grid;
@@ -498,7 +509,7 @@ button.danger { background: var(--red); color: #fff; }
 
   .cell { font-size: 11px; padding: 1px; }
   .cell .caption { display: none; }
-  .cell .marker { width: 10px; height: 10px; inset: auto 1px 1px auto; }
+  .cell .marker { width: 46%; min-width: 11px; border-width: 1.5px; inset: auto 1px 1px auto; }
 
   .site .licence { inset: 1px; border-width: 1px; font-size: 5px; }
 
@@ -531,7 +542,7 @@ button.danger { background: var(--red); color: #fff; }
   .banner { font-size: 11px; padding: 8px 10px; }
   .setup .title { font-size: 34px; }
   .cell { font-size: 9px; }
-  .card { width: 104px; min-height: 152px; }
+  .card { width: 132px; min-height: 164px; }
 }
 
 /* Zoom control — only meaningful where the board has been scaled down. */

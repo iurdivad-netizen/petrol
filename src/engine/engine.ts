@@ -394,6 +394,11 @@ export function applyAction(state: GameState, action: Action): ActionResult {
         if (action.amount <= 0) return fail('Licitação inválida.');
         if (player(state, action.playerId).cash < action.amount) return fail('Capital insuficiente.');
         a.bids[action.playerId] = action.amount;
+        log(state, action.playerId, `Licitou ${action.amount} M.`);
+      } else {
+        // Recorded so an auction reads as something that happened, rather than
+        // a silence followed by a result.
+        log(state, action.playerId, 'Passou no leilão.');
       }
       a.awaiting.splice(pos, 1);
       if (a.awaiting.length > 0) return ok;
