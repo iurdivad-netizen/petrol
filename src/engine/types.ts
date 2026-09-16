@@ -65,6 +65,12 @@ export interface Vehicle {
    * Always a 50/50 split of profits and losses.
    */
   partner: PlayerId | 'bank' | null;
+  /**
+   * Parties whose offer to dissolve the venture the other side has refused.
+   * The booklet only allows a sale to the bank once the partner has been
+   * asked and declined, so the refusal has to survive the turn (§8).
+   */
+  dissolutionRefusals?: PlayerId[];
 }
 
 export interface Player {
@@ -106,6 +112,7 @@ export interface BankStock {
 export type Phase =
   | 'resolveSpace'
   | 'partnerOffer'
+  | 'dissolveOffer'
   | 'draw'
   | 'playCard'
   | 'resolveCard'
@@ -160,6 +167,21 @@ export interface GameEvent {
   message: string;
 }
 
+/**
+ * One party proposing to end a tanker venture. The booklet has them offer to
+ * buy the other's half or to sell their own; the partner answers, and only a
+ * refusal opens the sale to the bank (§8).
+ */
+export interface DissolveOffer {
+  vehicleId: string;
+  proposerId: PlayerId;
+  partnerId: PlayerId;
+  /** 'buy' = the proposer buys the partner's half; 'sell' = sells their own. */
+  offer: 'buy' | 'sell';
+  /** The phase to return to once the question is answered. */
+  resumePhase: Phase;
+}
+
 export interface GameState {
   /** Bumped when the shape changes so old saves can be migrated or rejected. */
   saveVersion: number;
@@ -189,6 +211,7 @@ export interface GameState {
   bank: BankStock;
   auction: AuctionState | null;
   partnerOffer: PartnerOffer | null;
+  dissolveOffer: DissolveOffer | null;
 
   /**
    * True while a player is exercising a privilege bought at auction at the

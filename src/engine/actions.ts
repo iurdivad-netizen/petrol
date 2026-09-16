@@ -31,7 +31,13 @@ export type Action =
   | { type: 'chooseSpace'; space: number }
   | { type: 'confiscate'; siteIds: string[] }
   | { type: 'surrenderTower'; siteId: string }
-  /** Dissolve a tanker venture on your turn (§8). */
+  /**
+   * Offer to end a tanker venture with a company partner: either buy their
+   * half or sell your own. The partner answers with `dissolveReply` (§8).
+   */
+  | { type: 'proposeDissolution'; vehicleId: string; offer: 'buy' | 'sell' }
+  | { type: 'dissolveReply'; playerId: PlayerId; accept: boolean }
+  /** Sell your half of a tanker venture to the bank (§8). */
   | { type: 'dissolvePartnership'; vehicleId: string };
 
 export interface ActionResult {

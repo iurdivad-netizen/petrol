@@ -459,7 +459,7 @@ function controls(s: GameState): HTMLElement {
   heading.appendChild(el('h3', undefined,
     s.phase === 'auction' && actorOf(s) !== p.id
       ? `Leilão — lance de ${waiting?.company}`
-      : s.phase === 'partnerOffer' && actorOf(s) !== p.id
+      : (s.phase === 'partnerOffer' || s.phase === 'dissolveOffer') && actorOf(s) !== p.id
         ? `Sociedade — resposta de ${waiting?.company}`
         : `Vez de ${p.company}${p.isAi ? ' (automática)' : ''}`));
   heading.appendChild(button('Regras', () => openRules(s.players.length), 'secondary'));
@@ -474,6 +474,8 @@ function controls(s: GameState): HTMLElement {
         ? `${actor.company} está a decidir o lance…`
         : s.phase === 'partnerOffer'
           ? `${actor.company} está a pensar se entra a meias…`
+          : s.phase === 'dissolveOffer'
+            ? `${actor.company} está a pensar se dissolve a sociedade…`
           : `${actor.company} está a jogar — restam cerca de ${yearsRemaining(s).toFixed(1)} anos de lucros.`;
     wrap.appendChild(thinking);
     return wrap;
@@ -508,6 +510,30 @@ function controls(s: GameState): HTMLElement {
       dispatch({ type: 'partnerReply', playerId: asked, accept: true })));
     actions.appendChild(button('Recusar', () =>
       dispatch({ type: 'partnerReply', playerId: asked, accept: false }), 'secondary'));
+    wrap.appendChild(prompt);
+    if (notice) {
+      const err = el('div', 'prompt', notice);
+      err.style.borderLeftColor = '#b00';
+      wrap.appendChild(err);
+    }
+    wrap.appendChild(actions);
+    return wrap;
+  }
+
+  // The other half of a venture answers an offer to dissolve it (§8).
+  if (s.phase === 'dissolveOffer' && s.dissolveOffer) {
+    const o = s.dissolveOffer;
+    const stake = Math.floor(PRICES.tanker / 2);
+    const proposer = s.players[o.proposerId];
+    prompt.textContent = o.offer === 'buy'
+      ? `${proposer?.company} propõe comprar a sua parte do petroleiro por ${stake} M. ` +
+        'Aceitando, recebe o dinheiro e deixa a sociedade.'
+      : `${proposer?.company} propõe vender-lhe a sua parte do petroleiro por ${stake} M. ` +
+        'Aceitando, paga e fica com o petroleiro sozinho.';
+    actions.appendChild(button(o.offer === 'buy' ? `Vender (${stake} M)` : `Comprar (${stake} M)`, () =>
+      dispatch({ type: 'dissolveReply', playerId: o.partnerId, accept: true })));
+    actions.appendChild(button('Recusar', () =>
+      dispatch({ type: 'dissolveReply', playerId: o.partnerId, accept: false }), 'secondary'));
     wrap.appendChild(prompt);
     if (notice) {
       const err = el('div', 'prompt', notice);
@@ -662,6 +688,7 @@ function controls(s: GameState): HTMLElement {
             ? `Tire uma carta do baralho (${s.deck.length} restantes).`
             : 'O baralho acabou — jogue das cartas que tem na mão.';
           actions.appendChild(button('Tirar carta', () => dispatch({ type: 'drawCard' })));
+          actions.appendChild(dissolveButtons(s));
           break;
         case 'playCard':
           prompt.textContent = 'Escolha a carta que quer jogar.';
@@ -707,6 +734,38 @@ function controls(s: GameState): HTMLElement {
 
   if (s.phase === 'playCard') wrap.appendChild(handView(s));
   return wrap;
+}
+
+/**
+ * Dissolution offers for the current player's tanker ventures, available at the
+ * start of their turn. The partner has first refusal; only once they have said
+ * no does the sale to the bank appear (§8).
+ */
+function dissolveButtons(s: GameState): HTMLElement {
+  const frag = el('span');
+  const me = s.currentPlayer;
+  const stake = Math.floor(PRICES.tanker / 2);
+  for (const v of s.vehicles) {
+    if (v.kind !== 'tanker' || v.partner === null) continue;
+    if (v.ownerId !== me && v.partner !== me) continue;
+    const other = v.ownerId === me ? v.partner : v.ownerId;
+    if (typeof other !== 'number') {
+      frag.appendChild(button(`Desfazer sociedade com o banco (${stake} M)`, () =>
+        dispatch({ type: 'dissolvePartnership', vehicleId: v.id }), 'secondary'));
+      continue;
+    }
+    const name = s.players[other]?.company ?? '';
+    if ((v.dissolutionRefusals ?? []).includes(me)) {
+      frag.appendChild(button(`Vender ao banco a parte do petroleiro (${stake} M)`, () =>
+        dispatch({ type: 'dissolvePartnership', vehicleId: v.id }), 'secondary'));
+      continue;
+    }
+    frag.appendChild(button(`Comprar a parte de ${name} (${stake} M)`, () =>
+      dispatch({ type: 'proposeDissolution', vehicleId: v.id, offer: 'buy' }), 'secondary'));
+    frag.appendChild(button(`Vender a ${name} a minha parte (${stake} M)`, () =>
+      dispatch({ type: 'proposeDissolution', vehicleId: v.id, offer: 'sell' }), 'secondary'));
+  }
+  return frag;
 }
 
 /** Offer-for-sale and forfeit buttons, available whenever a card is unresolved. */

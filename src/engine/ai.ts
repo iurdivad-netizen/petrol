@@ -35,6 +35,9 @@ import { annualProfitFor, tally } from './economy';
 import { idleLicences, toweredSites } from './spaces';
 import type { CardType, DepositKind, GameState, PlayerId, Site } from './types';
 
+/** The largest single bill the board can hand a tanker owner (space 4). */
+const TANKER_REPAIR_BILL = SPACE_FLAT_COST[4] ?? 50;
+
 export interface AiConfig {
   /** 0 plays at random among legal moves; 1 always takes its best judgement. */
   skill: number;
@@ -309,6 +312,20 @@ export function aiAction(state: GameState, config: AiConfig = AI_LEVELS.magnata!
     const affordable = actor.cash >= PRICES.tanker / 2 * 1.2;
     return { type: 'partnerReply', playerId: actor.id, accept: worth > 0 && affordable };
   }
+  if (state.phase === 'dissolveOffer' && state.dissolveOffer) {
+    const o = state.dissolveOffer;
+    const stake = Math.floor(PRICES.tanker / 2);
+    // A tanker counts at its full purchase price when the game is scored, so
+    // half a venture is worth its 150 M sale price PLUS whatever it still
+    // earns. At that fixed price the trade only ever favours the buyer; the
+    // seller does it to raise cash, which is what the booklet's clause is for.
+    const accept = o.offer === 'buy'
+      // They buy our half: only worth it if we need the cash.
+      ? actor.cash < TANKER_REPAIR_BILL
+      // We buy theirs: a gain, so long as the 50 M storm is still covered.
+      : actor.cash >= stake + TANKER_REPAIR_BILL;
+    return { type: 'dissolveReply', playerId: actor.id, accept };
+  }
 
   const me = state.players[state.currentPlayer];
   if (!me?.isAi) return null;
@@ -447,8 +464,32 @@ export function aiAction(state: GameState, config: AiConfig = AI_LEVELS.magnata!
   }
 
   switch (state.phase) {
-    case 'draw':
+    case 'draw': {
+      // Dissolving is a turn action taken before drawing (§8). Since a half
+      // share scores at exactly what it sells for, there is no reason to sell
+      // except to raise cash, and buying the other half is a plain gain — so
+      // the AI only asks when short of money, or when it can comfortably buy.
+      const stake = Math.floor(PRICES.tanker / 2);
+      for (const v of state.vehicles) {
+        if (v.kind !== 'tanker') continue;
+        if (v.ownerId !== me.id && v.partner !== me.id) continue;
+        const other = v.ownerId === me.id ? v.partner : v.ownerId;
+        if (typeof other !== 'number') continue;
+        const refused = (v.dissolutionRefusals ?? []).includes(me.id);
+        // Selling is a last resort: it is score-neutral and costs the
+        // remaining income, so it only makes sense when the company cannot
+        // cover a 50 M storm AND the share no longer earns back its price.
+        const halfIncome = (ANNUAL_PROFIT.tanker / 2) * years;
+        if (me.cash < TANKER_REPAIR_BILL && halfIncome < stake) {
+          if (!refused) return { type: 'proposeDissolution', vehicleId: v.id, offer: 'sell' };
+          return { type: 'dissolvePartnership', vehicleId: v.id };
+        }
+        if (!refused && me.cash >= stake * 2) {
+          return { type: 'proposeDissolution', vehicleId: v.id, offer: 'buy' };
+        }
+      }
       return { type: 'drawCard' };
+    }
 
     case 'playCard': {
       const choices: CardChoice[] = me.hand.map((card) => {

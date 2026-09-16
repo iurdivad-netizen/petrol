@@ -183,6 +183,7 @@ export function createGame(options: NewGameOptions = {}): GameState {
     },
     auction: null,
     partnerOffer: null,
+    dissolveOffer: null,
     exercisingPrivilege: false,
     turnNumber: 1,
     turnsPerPlayer: TURNS_PER_PLAYER,

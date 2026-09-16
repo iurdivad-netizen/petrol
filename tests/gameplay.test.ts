@@ -509,3 +509,73 @@ describe('the right to duplicate (RULES.md §5)', () => {
     expect(s.players[0]!.duplicarUsed).toBe(false);
   });
 });
+
+describe('dissolving a tanker venture (RULES.md §8)', () => {
+  function venture(cash = 400) {
+    const s = game(3);
+    s.phase = 'draw';
+    s.vehicles.push({ id: 'tk', kind: 'tanker', siteId: null, ownerId: 0, partner: 1 });
+    for (const q of s.players) q.cash = cash;
+    return s;
+  }
+
+  it('gives the partner first refusal before the bank', () => {
+    const s = venture();
+    const r = applyAction(s, { type: 'dissolvePartnership', vehicleId: 'tk' });
+    expect(r.ok).toBe(false);
+    expect(s.vehicles[0]).toMatchObject({ ownerId: 0, partner: 1 });
+  });
+
+  it('moves the half between the two companies when the partner agrees', () => {
+    const s = venture();
+    expect(applyAction(s, { type: 'proposeDissolution', vehicleId: 'tk', offer: 'sell' }).ok).toBe(true);
+    expect(s.phase).toBe('dissolveOffer');
+    expect(actingPlayer(s)).toBe(1);
+    // Only the company that was asked may answer.
+    expect(applyAction(s, { type: 'dissolveReply', playerId: 2, accept: true }).ok).toBe(false);
+
+    const stake = Math.floor(PRICES.tanker / 2);
+    expect(applyAction(s, { type: 'dissolveReply', playerId: 1, accept: true }).ok).toBe(true);
+    expect(s.phase).toBe('draw');
+    expect(s.players[0]!.cash).toBe(400 + stake);
+    expect(s.players[1]!.cash).toBe(400 - stake);
+    // The buyer's licence now commands the tanker alone.
+    expect(s.vehicles[0]).toMatchObject({ ownerId: 1, partner: null });
+  });
+
+  it('buys the partner out the other way round', () => {
+    const s = venture();
+    applyAction(s, { type: 'proposeDissolution', vehicleId: 'tk', offer: 'buy' });
+    applyAction(s, { type: 'dissolveReply', playerId: 1, accept: true });
+    const stake = Math.floor(PRICES.tanker / 2);
+    expect(s.players[0]!.cash).toBe(400 - stake);
+    expect(s.players[1]!.cash).toBe(400 + stake);
+    expect(s.vehicles[0]).toMatchObject({ ownerId: 0, partner: null });
+  });
+
+  it('opens the sale to the bank only after a refusal, and the ex-partner takes the bank on', () => {
+    const s = venture();
+    applyAction(s, { type: 'proposeDissolution', vehicleId: 'tk', offer: 'sell' });
+    applyAction(s, { type: 'dissolveReply', playerId: 1, accept: false });
+    expect(s.phase).toBe('draw');
+    expect(s.vehicles[0]).toMatchObject({ ownerId: 0, partner: 1 });
+
+    expect(applyAction(s, { type: 'dissolvePartnership', vehicleId: 'tk' }).ok).toBe(true);
+    expect(s.vehicles[0]).toMatchObject({ ownerId: 1, partner: 'bank' });
+  });
+
+  it('refuses for the partner when they cannot pay', () => {
+    const s = venture();
+    s.players[1]!.cash = 10;
+    applyAction(s, { type: 'proposeDissolution', vehicleId: 'tk', offer: 'sell' });
+    applyAction(s, { type: 'dissolveReply', playerId: 1, accept: true });
+    expect(s.vehicles[0]).toMatchObject({ ownerId: 0, partner: 1 });
+    expect(s.players[1]!.cash).toBe(10);
+  });
+
+  it('is a start-of-turn action, not something to do mid-card', () => {
+    const s = venture();
+    s.phase = 'resolveCard';
+    expect(applyAction(s, { type: 'proposeDissolution', vehicleId: 'tk', offer: 'sell' }).ok).toBe(false);
+  });
+});

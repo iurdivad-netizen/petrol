@@ -65,6 +65,9 @@ export function actingPlayer(state: GameState): PlayerId {
     const asked = state.partnerOffer.awaiting[0];
     if (asked !== undefined) return asked;
   }
+  if (state.phase === 'dissolveOffer' && state.dissolveOffer) {
+    return state.dissolveOffer.partnerId;
+  }
   return state.currentPlayer;
 }
 
@@ -413,10 +416,80 @@ export function applyAction(state: GameState, action: Action): ActionResult {
       return settleAuction(state);
     }
 
-    case 'dissolvePartnership': {
+    case 'proposeDissolution': {
+      // Dissolving is a turn action, taken before the card is drawn.
+      if (state.phase !== 'draw') return fail('Só pode dissolver no início do seu turno.');
       const v = state.vehicles.find((x) => x.id === action.vehicleId);
       if (!v || v.kind !== 'tanker') return fail('Petroleiro inválido.');
       if (v.ownerId !== id && v.partner !== id) return fail('Não é sócio deste petroleiro.');
+      const other = v.ownerId === id ? v.partner : v.ownerId;
+      if (typeof other !== 'number') {
+        return fail('Este petroleiro não tem companhia sócia — só pode vender ao banco.');
+      }
+      const stake = Math.floor(PRICES.tanker / 2);
+      if (action.offer === 'buy' && p.cash < stake) {
+        return fail('Capital insuficiente para comprar a parte do sócio.');
+      }
+      state.dissolveOffer = {
+        vehicleId: v.id,
+        proposerId: id,
+        partnerId: other,
+        offer: action.offer,
+        resumePhase: state.phase,
+      };
+      state.phase = 'dissolveOffer';
+      log(state, id, action.offer === 'buy'
+        ? `Propõe comprar a parte de ${player(state, other).company} no petroleiro por ${stake} M.`
+        : `Propõe vender a sua parte do petroleiro a ${player(state, other).company} por ${stake} M.`);
+      return ok;
+    }
+
+    case 'dissolveReply': {
+      if (state.phase !== 'dissolveOffer' || !state.dissolveOffer) {
+        return fail('Ninguém propôs dissolver nada.');
+      }
+      const offer = state.dissolveOffer;
+      if (action.playerId !== offer.partnerId) return fail('Não lhe foi perguntado.');
+      const v = state.vehicles.find((x) => x.id === offer.vehicleId);
+      state.dissolveOffer = null;
+      state.phase = offer.resumePhase;
+      if (!v || v.kind !== 'tanker') return fail('Petroleiro inválido.');
+
+      const stake = Math.floor(PRICES.tanker / 2);
+      const buyerId = offer.offer === 'buy' ? offer.proposerId : offer.partnerId;
+      const sellerId = offer.offer === 'buy' ? offer.partnerId : offer.proposerId;
+      const buyer = player(state, buyerId);
+
+      if (!action.accept || buyer.cash < stake) {
+        // Refused, or the buyer cannot pay. Only now may the proposer go to
+        // the bank instead (§8).
+        v.dissolutionRefusals = [...(v.dissolutionRefusals ?? []), offer.proposerId];
+        log(state, action.playerId, 'Não aceitou dissolver a sociedade.');
+        return ok;
+      }
+
+      // Half the venture changes hands between the two companies; the buyer's
+      // licence then commands the tanker alone.
+      buyer.cash -= stake;
+      player(state, sellerId).cash += stake;
+      v.ownerId = buyerId;
+      v.partner = null;
+      delete v.dissolutionRefusals;
+      log(state, action.playerId,
+        `Aceitou dissolver: ${buyer.company} fica com o petroleiro por ${stake} M.`);
+      return ok;
+    }
+
+    case 'dissolvePartnership': {
+      if (state.phase !== 'draw') return fail('Só pode dissolver no início do seu turno.');
+      const v = state.vehicles.find((x) => x.id === action.vehicleId);
+      if (!v || v.kind !== 'tanker') return fail('Petroleiro inválido.');
+      if (v.ownerId !== id && v.partner !== id) return fail('Não é sócio deste petroleiro.');
+      const otherSide = v.ownerId === id ? v.partner : v.ownerId;
+      if (typeof otherSide === 'number' && !(v.dissolutionRefusals ?? []).includes(id)) {
+        // The partner has first refusal; the bank is only the fallback (§8).
+        return fail('Pergunte primeiro ao sócio se quer comprar ou vender a parte.');
+      }
       // Sell your share to the bank: withdraw your licence, place a green
       // marker, and the other side thereafter partners with the bank (§8).
       const half = halveReceipt(PRICES.tanker);
