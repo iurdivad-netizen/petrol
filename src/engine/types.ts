@@ -167,7 +167,7 @@ export interface GameState {
   vehicles: Vehicle[];
 
   deck: Card[];
-  /** Played cards, face down beside the deck. */
+  /** Played cards, face up beside the deck: everyone sees what was played. */
   discard: Card[];
 
   bank: BankStock;

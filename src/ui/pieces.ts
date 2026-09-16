@@ -78,3 +78,25 @@ export function truckSvg(colour = '#2f6fd0'): string {
 export function depositSvg(kind: DepositKind): string {
   return kind === 'gas' ? gasSvg() : oilSvg(kind);
 }
+
+/**
+ * The two card boxes printed on the board, filled.
+ *
+ * The board tells you which way up each goes: the deck sits "com as costas
+ * voltadas para cima" — backs upwards, face down — while the card just played
+ * sits "com as costas voltadas para baixo", backs downwards, so it is face up
+ * and everyone can see it.
+ */
+export function cardBackSvg(): string {
+  return svg(
+    `<rect x="1" y="1" width="22" height="30" rx="2.5" fill="#1d5f6b"/>
+     <rect x="2.6" y="2.6" width="18.8" height="26.8" rx="1.6" fill="none" stroke="#e8c98a" stroke-width="0.7"/>
+     <g fill="#e8c98a" opacity="0.9">
+       <polygon points="12,8 15.4,19 8.6,19"/>
+       <rect x="8.6" y="19.6" width="6.8" height="1.1" rx="0.4"/>
+     </g>
+     <text x="12" y="26.4" font-size="3.1" letter-spacing="0.5" fill="#e8c98a"
+           text-anchor="middle" font-family="Arial, sans-serif">KARTO</text>`,
+    '0 0 24 32',
+  );
+}

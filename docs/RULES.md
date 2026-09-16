@@ -135,8 +135,10 @@ Every subsequent turn, in clockwise order:
 1. **Resolve the space** the blue marker currently occupies (it was moved there by the
    *previous* player's card).
 2. **Draw one card** from the deck and add it to hand.
-3. **Play one card** face down beside the deck, carrying out what it says *if able and
-   willing*.
+3. **Play one card** beside the deck, **face up** — the board says *"com as
+   costas voltadas para baixo"*, backs downwards, so the played card is visible
+   to everyone. Only the deck is face down (*"costas voltadas para cima"*).
+   Carry out what it says *if able and willing*.
 4. **Advance the blue marker** by the number of squares the played card indicates. Turn
    ends.
 

@@ -6,7 +6,8 @@
 
 import { MAP, PASSAGEM_INDEX, SECOND_PASSAGEM_INDEX, TRACK } from '../data/board';
 import { DEPOSIT_NAMES, SPACE_NAMES } from '../data/rules';
-import { depositSvg, tankerSvg, towerSvg, truckSvg } from './pieces';
+import { cardBackSvg, depositSvg, tankerSvg, towerSvg, truckSvg } from './pieces';
+import { CARD_NAMES } from '../data/rules';
 import type { GameState, Site } from '../engine/types';
 
 const COMPANY_COLOURS = ['#d4342a', '#1d9099', '#f0b93b', '#7b3fa0', '#2a7d4f', '#e2761b'];
@@ -209,10 +210,61 @@ export function renderBoard(state: GameState, handlers: BoardHandlers = {}): HTM
     overlay.className = 'panel-inner';
     overlay.style.gridColumn = `${Math.min(...cols) + 1} / ${Math.max(...cols) + 2}`;
     overlay.style.gridRow = `${Math.min(...rows) + 1} / ${Math.max(...rows) + 2}`;
-    overlay.innerHTML =
-      '<div class="deck-box">Coloque aqui o baralho com as costas voltadas para cima</div>' +
-      '<div class="karto-mark">Petróleo<span>Karto</span></div>' +
-      '<div class="deck-box">Coloque aqui a carta que jogou com as costas voltadas para baixo</div>';
+    // The deck box, face down, with what is left of it.
+    const deckBox = document.createElement('div');
+    deckBox.className = 'deck-box';
+    if (state.deck.length > 0) {
+      deckBox.classList.add('filled');
+      deckBox.title = `Baralho — ${state.deck.length} carta(s)`;
+      const stack = document.createElement('div');
+      stack.className = 'card-stack';
+      // A couple of cards peeking out beneath, so it reads as a pile.
+      const depth = Math.min(3, state.deck.length);
+      for (let i = depth - 1; i >= 0; i--) {
+        const layer = document.createElement('div');
+        layer.className = 'stack-layer';
+        layer.style.transform = `translate(${i * 1.5}px, ${i * 1.5}px)`;
+        layer.innerHTML = cardBackSvg();
+        stack.appendChild(layer);
+      }
+      deckBox.appendChild(stack);
+      const count = document.createElement('span');
+      count.className = 'box-count';
+      count.textContent = String(state.deck.length);
+      deckBox.appendChild(count);
+    } else {
+      deckBox.textContent = 'Baralho esgotado';
+    }
+
+    const mark = document.createElement('div');
+    mark.className = 'karto-mark';
+    mark.innerHTML = 'Petróleo<span>Karto</span>';
+
+    // The played box, face up: the board has it backs-downwards, so it shows.
+    const playedBox = document.createElement('div');
+    playedBox.className = 'deck-box';
+    const played = state.discard[state.discard.length - 1];
+    if (played) {
+      playedBox.classList.add('filled', 'played');
+      playedBox.title = `${CARD_NAMES[played.type]} — avança ${played.move}`;
+      const face = document.createElement('div');
+      face.className = 'mini-card';
+      const title = document.createElement('div');
+      title.className = 'mini-title';
+      title.textContent = CARD_NAMES[played.type];
+      const move = document.createElement('div');
+      move.className = 'mini-move';
+      move.textContent = String(played.move);
+      const cap = document.createElement('div');
+      cap.className = 'mini-cap';
+      cap.textContent = 'casas';
+      face.append(title, move, cap);
+      playedBox.appendChild(face);
+    } else {
+      playedBox.textContent = 'Carta jogada';
+    }
+
+    overlay.append(deckBox, mark, playedBox);
     map.appendChild(overlay);
   }
 

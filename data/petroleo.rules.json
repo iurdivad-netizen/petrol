@@ -212,7 +212,8 @@
         "step": 3,
         "action": "playCard",
         "to": "discardBesideDeck",
-        "faceDown": true
+        "faceDown": false,
+        "note": "Placed beside the deck FACE UP: the board reads \"com as costas voltadas para baixo\" — backs downwards. Only the deck is face down."
       },
       {
         "step": 4,
