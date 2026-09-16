@@ -1,7 +1,7 @@
 /** Turn flow, the development chain, and the subsystems the booklet specifies. */
 import { describe, expect, it } from 'vitest';
 import { createGame } from '../src/engine/setup';
-import { applyAction } from '../src/engine/engine';
+import { actingPlayer, applyAction } from '../src/engine/engine';
 import { annualProfitFor, payBank, receiveFromBank, tally } from '../src/engine/economy';
 import { scorePlayer, winners } from '../src/engine/scoring';
 import { beginSpace } from '../src/engine/spaces';
@@ -411,5 +411,101 @@ describe('A sua conveniência (RULES.md §9, space 20)', () => {
     beginSpace(s, 20);
     applyAction(s, { type: 'chooseSpace', space: 5 });
     expect(s.pending.kind).toBe('optionalBuyLicence');
+  });
+});
+
+describe('tanker partnership consent (RULES.md §8)', () => {
+  /** Puts the current player on the tanker decision, as a card would. */
+  function offerTanker(s: GameState) {
+    s.phase = 'resolveCard';
+    s.pending = { kind: 'buyTankerChoice' };
+  }
+
+  it('refuses a rival as partner when nobody has been asked', () => {
+    const s = game(3);
+    offerTanker(s);
+    const r = applyAction(s, { type: 'buyTanker', partner: 1 });
+    expect(r.ok).toBe(false);
+    expect(s.vehicles).toHaveLength(0);
+  });
+
+  it('asks every solvent rival and waits on them, not on the buyer', () => {
+    const s = game(3);
+    offerTanker(s);
+    expect(applyAction(s, { type: 'seekPartner' }).ok).toBe(true);
+    expect(s.phase).toBe('partnerOffer');
+    expect(s.partnerOffer?.awaiting).toEqual([1, 2]);
+    // The game waits on a company being asked, not on the one asking.
+    expect(actingPlayer(s)).toBe(1);
+    expect(applyAction(s, { type: 'partnerReply', playerId: 0, accept: true }).ok).toBe(false);
+    // Any company still on the list may answer, and only once.
+    expect(applyAction(s, { type: 'partnerReply', playerId: 2, accept: true }).ok).toBe(true);
+    expect(applyAction(s, { type: 'partnerReply', playerId: 2, accept: true }).ok).toBe(false);
+    expect(s.phase).toBe('partnerOffer');
+  });
+
+  it('lets the buyer choose among those who agreed, and both pay half', () => {
+    const s = game(3);
+    offerTanker(s);
+    applyAction(s, { type: 'seekPartner' });
+    applyAction(s, { type: 'partnerReply', playerId: 1, accept: false });
+    applyAction(s, { type: 'partnerReply', playerId: 2, accept: true });
+    expect(s.phase).toBe('resolveCard');
+    expect(s.pending).toEqual({ kind: 'choosePartner', willing: [2] });
+
+    // The company that said no is still not available as a partner.
+    expect(applyAction(s, { type: 'buyTanker', partner: 1 }).ok).toBe(false);
+
+    const before = [s.players[0]!.cash, s.players[2]!.cash];
+    expect(applyAction(s, { type: 'buyTanker', partner: 2 }).ok).toBe(true);
+    const half = Math.floor(PRICES.tanker / 2);
+    expect(s.players[0]!.cash).toBe(before[0]! - Math.ceil(PRICES.tanker / 2));
+    expect(s.players[2]!.cash).toBe(before[1]! - half);
+    expect(s.vehicles[0]).toMatchObject({ kind: 'tanker', ownerId: 0, partner: 2 });
+  });
+
+  it('falls back to buying alone or with the bank when all refuse', () => {
+    const s = game(3);
+    offerTanker(s);
+    applyAction(s, { type: 'seekPartner' });
+    applyAction(s, { type: 'partnerReply', playerId: 1, accept: false });
+    applyAction(s, { type: 'partnerReply', playerId: 2, accept: false });
+    expect(s.pending).toEqual({ kind: 'buyTankerChoice', willing: [] });
+    expect(applyAction(s, { type: 'buyTanker', partner: 1 }).ok).toBe(false);
+    expect(applyAction(s, { type: 'buyTanker', partner: 'bank' }).ok).toBe(true);
+    expect(s.vehicles[0]).toMatchObject({ partner: 'bank' });
+  });
+
+  it('refuses to ask when no rival could pay a half share', () => {
+    const s = game(3);
+    for (const q of s.players.slice(1)) q.cash = 10;
+    offerTanker(s);
+    expect(applyAction(s, { type: 'seekPartner' }).ok).toBe(false);
+    expect(s.phase).toBe('resolveCard');
+  });
+});
+
+describe('the right to duplicate (RULES.md §5)', () => {
+  it('is spent by buying, and equally by declining the offer', () => {
+    const bought = game(3);
+    bought.phase = 'resolveCard';
+    bought.pending = { kind: 'optionalBuyLicence', terrain: 'land', mayDuplicate: true };
+    const site = bought.sites.find((x) => x.ownerId === null && x.terrain === 'land')!;
+    applyAction(bought, { type: 'buyLicence', siteIds: [site.id] });
+    expect(bought.players[0]!.duplicarUsed).toBe(true);
+
+    const declined = game(3);
+    declined.phase = 'resolveCard';
+    declined.pending = { kind: 'optionalBuyLicence', terrain: 'land', mayDuplicate: true };
+    applyAction(declined, { type: 'declineLicence' });
+    expect(declined.players[0]!.duplicarUsed).toBe(true);
+  });
+
+  it('is left alone when the offer never carried the right', () => {
+    const s = game(3);
+    s.phase = 'resolveCard';
+    s.pending = { kind: 'optionalBuyLicence', terrain: 'land', mayDuplicate: false };
+    applyAction(s, { type: 'declineLicence' });
+    expect(s.players[0]!.duplicarUsed).toBe(false);
   });
 });

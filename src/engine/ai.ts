@@ -295,11 +295,19 @@ function scoreCard(state: GameState, cardMove: number, ownValue: number): number
 export function aiAction(state: GameState, config: AiConfig = AI_LEVELS.magnata!): Action | null {
   if (state.phase === 'gameOver') return null;
 
-  // Auctions run out of turn: the game waits on the bidder, not the seller.
+  // Auctions and partnership offers run out of turn: the game waits on the
+  // company being asked, not on the one asking.
   const actor = state.players[actingPlayer(state)];
   if (!actor?.isAi) return null;
   if (state.phase === 'auction' && state.auction) {
     return auctionBid(state, actor.id, config);
+  }
+  if (state.phase === 'partnerOffer' && state.partnerOffer) {
+    // Half a tanker for half its price: worth it on the same three-year test.
+    const years = yearsRemaining(state);
+    const worth = netValue(PRICES.tanker / 2, ANNUAL_PROFIT.tanker / 2, years);
+    const affordable = actor.cash >= PRICES.tanker / 2 * 1.2;
+    return { type: 'partnerReply', playerId: actor.id, accept: worth > 0 && affordable };
   }
 
   const me = state.players[state.currentPlayer];
@@ -401,8 +409,27 @@ export function aiAction(state: GameState, config: AiConfig = AI_LEVELS.magnata!
       const solo = netValue(PRICES.tanker, ANNUAL_PROFIT.tanker, years);
       const shared = netValue(PRICES.tanker / 2, ANNUAL_PROFIT.tanker / 2, years);
       if (solo > 0 && me.cash >= PRICES.tanker * 1.2) return { type: 'buyTanker', partner: null };
-      if (shared > 0 && me.cash >= PRICES.tanker / 2) return { type: 'buyTanker', partner: 'bank' };
+      if (shared > 0 && me.cash >= PRICES.tanker / 2) {
+        // Ask the table first; only fall back to the bank if nobody wants in.
+        // Asking is refused outright when no rival could pay a half, so check
+        // that here too rather than have the engine reject the action.
+        const asked = state.pending.willing !== undefined;
+        const anyoneCouldPay = state.players.some(
+          (q) => q.id !== me.id && !q.bankrupt && q.cash >= Math.floor(PRICES.tanker / 2),
+        );
+        if (!asked && anyoneCouldPay) return { type: 'seekPartner' };
+        return { type: 'buyTanker', partner: 'bank' };
+      }
       return sellOrSkip(state);
+    }
+
+    case 'choosePartner': {
+      // Take the richest company that agreed: least likely to fold on us.
+      const best = [...state.pending.willing]
+        .sort((a, b) => (state.players[b]?.cash ?? 0) - (state.players[a]?.cash ?? 0))[0];
+      return best !== undefined
+        ? { type: 'buyTanker', partner: best }
+        : { type: 'buyTanker', partner: 'bank' };
     }
 
     case 'buyTruckChoice': {

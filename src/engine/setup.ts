@@ -182,6 +182,7 @@ export function createGame(options: NewGameOptions = {}): GameState {
       trucks: COMPONENT_SUPPLY.trucks,
     },
     auction: null,
+    partnerOffer: null,
     exercisingPrivilege: false,
     turnNumber: 1,
     turnsPerPlayer: TURNS_PER_PLAYER,

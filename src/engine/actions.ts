@@ -21,6 +21,9 @@ export type Action =
   | { type: 'declineTower' }
   | { type: 'chooseTowerOrLicence'; choice: 'tower' | 'licence'; siteId: string }
   | { type: 'placeDeposit'; siteId: string; deposit: DepositKind }
+  /** Ask the other companies who will go halves on a tanker (§8). */
+  | { type: 'seekPartner' }
+  | { type: 'partnerReply'; playerId: PlayerId; accept: boolean }
   | { type: 'buyTanker'; partner: PlayerId | 'bank' | null }
   | { type: 'declineTanker' }
   | { type: 'buyTruck'; siteId: string }

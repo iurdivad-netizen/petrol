@@ -105,6 +105,7 @@ export interface BankStock {
 
 export type Phase =
   | 'resolveSpace'
+  | 'partnerOffer'
   | 'draw'
   | 'playCard'
   | 'resolveCard'
@@ -125,7 +126,8 @@ export type Pending =
   | { kind: 'confiscateLicences'; count: number }
   | { kind: 'surrenderTowerSite' }
   | { kind: 'placeDeposit'; deposit: DepositKind }
-  | { kind: 'buyTankerChoice' }
+  | { kind: 'buyTankerChoice'; /** Rivals who agreed to go halves, once asked. */ willing?: PlayerId[] }
+  | { kind: 'choosePartner'; willing: PlayerId[] }
   | { kind: 'buyTruckChoice' }
   | { kind: 'towerOrLicenceChoice' };
 
@@ -136,6 +138,20 @@ export interface AuctionState {
   bids: Record<PlayerId, number>;
   /** Players yet to declare a bid or pass. */
   awaiting: PlayerId[];
+}
+
+/**
+ * A tanker bought in partnership costs half each, so the booklet has the buyer
+ * ASK — "perguntando aos seus colegas de jogo qual o que está interessado" —
+ * and choose among those who say yes. Without the ask, a player could bill a
+ * rival 150 M against their will.
+ */
+export interface PartnerOffer {
+  buyerId: PlayerId;
+  /** Rivals not yet asked. */
+  awaiting: PlayerId[];
+  /** Rivals who said yes. */
+  willing: PlayerId[];
 }
 
 export interface GameEvent {
@@ -172,6 +188,7 @@ export interface GameState {
 
   bank: BankStock;
   auction: AuctionState | null;
+  partnerOffer: PartnerOffer | null;
 
   /**
    * True while a player is exercising a privilege bought at auction at the

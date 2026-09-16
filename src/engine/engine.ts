@@ -61,6 +61,10 @@ export function actingPlayer(state: GameState): PlayerId {
     const bidder = state.auction.awaiting[0];
     if (bidder !== undefined) return bidder;
   }
+  if (state.phase === 'partnerOffer' && state.partnerOffer) {
+    const asked = state.partnerOffer.awaiting[0];
+    if (asked !== undefined) return asked;
+  }
   return state.currentPlayer;
 }
 
@@ -301,7 +305,9 @@ export function applyAction(state: GameState, action: Action): ActionResult {
       }
       payBank(state, id, price);
       for (const sid of action.siteIds) site(state, sid)!.ownerId = id;
-      if (action.siteIds.length === 2) p.duplicarUsed = true;
+      // The doubling right is spent by the first landing on a licence space,
+      // taken or not: "se por acaso se esqueceu, perdeu a oportunidade" (§10).
+      if (mayDuplicate) p.duplicarUsed = true;
       log(state, id, `Comprou ${action.siteIds.length} licença(s) ${terrain === 'sea' ? 'no mar' : 'em terra'} por ${price} M.`);
       afterSpace(state);
       return ok;
@@ -309,6 +315,8 @@ export function applyAction(state: GameState, action: Action): ActionResult {
 
     case 'declineLicence': {
       if (state.pending.kind !== 'optionalBuyLicence') return fail('Nada a recusar.');
+      // Declining spends the doubling right just as taking it does (§10).
+      if (state.pending.mayDuplicate) p.duplicarUsed = true;
       afterSpace(state);
       return ok;
     }
@@ -475,13 +483,59 @@ export function applyAction(state: GameState, action: Action): ActionResult {
       return ok;
     }
 
+    case 'seekPartner': {
+      if (state.pending.kind !== 'buyTankerChoice') return fail('Não há petroleiro a comprar.');
+      const half = Math.floor(PRICES.tanker / 2);
+      const askable = state.players
+        .filter((q) => q.id !== id && !q.bankrupt && q.cash >= half)
+        .map((q) => q.id);
+      if (askable.length === 0) return fail('Nenhuma companhia com capital para entrar a meias.');
+      state.partnerOffer = { buyerId: id, awaiting: askable, willing: [] };
+      state.phase = 'partnerOffer';
+      log(state, id, 'Pergunta quem quer entrar a meias num petroleiro.');
+      return ok;
+    }
+
+    case 'partnerReply': {
+      if (state.phase !== 'partnerOffer' || !state.partnerOffer) return fail('Ninguém perguntou.');
+      const offer = state.partnerOffer;
+      const pos = offer.awaiting.indexOf(action.playerId);
+      if (pos < 0) return fail('Não lhe foi perguntado.');
+      offer.awaiting.splice(pos, 1);
+      if (action.accept) {
+        offer.willing.push(action.playerId);
+        log(state, action.playerId, 'Aceita entrar a meias.');
+      } else {
+        log(state, action.playerId, 'Não quer entrar a meias.');
+      }
+      if (offer.awaiting.length > 0) return ok;
+
+      // Everyone has answered; the buyer now chooses (§8).
+      state.phase = 'resolveCard';
+      state.partnerOffer = null;
+      state.pending = offer.willing.length > 0
+        ? { kind: 'choosePartner', willing: offer.willing }
+        : { kind: 'buyTankerChoice', willing: [] };
+      if (offer.willing.length === 0) {
+        log(state, offer.buyerId, 'Ninguém quis — resta comprar sozinho ou com o banco.');
+      }
+      return ok;
+    }
+
     case 'buyTanker': {
-      if (state.pending.kind !== 'buyTankerChoice') return fail('Não pode comprar petroleiro agora.');
+      const choosing = state.pending.kind === 'choosePartner';
+      if (state.pending.kind !== 'buyTankerChoice' && !choosing) {
+        return fail('Não pode comprar petroleiro agora.');
+      }
       if (state.bank.tankers <= 0) return fail('Não há petroleiros disponíveis.');
       const partner = action.partner;
       const share = partner === null ? PRICES.tanker : Math.ceil(PRICES.tanker / 2);
       if (p.cash < share) return fail('Capital insuficiente.');
       if (typeof partner === 'number') {
+        // A company can only be made a partner if it agreed when asked (§8).
+        const agreed =
+          state.pending.kind === 'choosePartner' && state.pending.willing.includes(partner);
+        if (!agreed) return fail('Essa companhia não aceitou entrar a meias.');
         const other = player(state, partner);
         if (other.bankrupt || other.cash < Math.floor(PRICES.tanker / 2)) return fail('Sócio sem capital.');
         payBank(state, partner, Math.floor(PRICES.tanker / 2));
@@ -501,7 +555,9 @@ export function applyAction(state: GameState, action: Action): ActionResult {
     }
 
     case 'declineTanker': {
-      if (state.pending.kind !== 'buyTankerChoice') return fail('Nada a recusar.');
+      if (state.pending.kind !== 'buyTankerChoice' && state.pending.kind !== 'choosePartner') {
+        return fail('Nada a recusar.');
+      }
       finishCard(state);
       return ok;
     }

@@ -455,10 +455,13 @@ function controls(s: GameState): HTMLElement {
   const pending = s.pending;
 
   const heading = el('div', 'turn-head');
+  const waiting = s.players[actorOf(s)];
   heading.appendChild(el('h3', undefined,
     s.phase === 'auction' && actorOf(s) !== p.id
-      ? `Leilão — lance de ${s.players[actorOf(s)]?.company}`
-      : `Vez de ${p.company}${p.isAi ? ' (automática)' : ''}`));
+      ? `Leilão — lance de ${waiting?.company}`
+      : s.phase === 'partnerOffer' && actorOf(s) !== p.id
+        ? `Sociedade — resposta de ${waiting?.company}`
+        : `Vez de ${p.company}${p.isAi ? ' (automática)' : ''}`));
   heading.appendChild(button('Regras', () => openRules(s.players.length), 'secondary'));
   wrap.appendChild(heading);
 
@@ -469,7 +472,9 @@ function controls(s: GameState): HTMLElement {
     thinking.textContent =
       s.phase === 'auction'
         ? `${actor.company} está a decidir o lance…`
-        : `${actor.company} está a jogar — restam cerca de ${yearsRemaining(s).toFixed(1)} anos de lucros.`;
+        : s.phase === 'partnerOffer'
+          ? `${actor.company} está a pensar se entra a meias…`
+          : `${actor.company} está a jogar — restam cerca de ${yearsRemaining(s).toFixed(1)} anos de lucros.`;
     wrap.appendChild(thinking);
     return wrap;
   }
@@ -488,6 +493,28 @@ function controls(s: GameState): HTMLElement {
       render();
     }));
     wrap.appendChild(again);
+    return wrap;
+  }
+
+  // A company asked to go halves on a tanker answers before anything else (§8).
+  if (s.phase === 'partnerOffer' && s.partnerOffer) {
+    const asked = actingPlayer(s);
+    const buyer = s.players[s.partnerOffer.buyerId];
+    const half = Math.floor(PRICES.tanker / 2);
+    prompt.textContent =
+      `${buyer?.company} pergunta se quer entrar a meias num petroleiro: ` +
+      `paga ${half} M e reparte o lucro anual de ${ANNUAL_PROFIT.tanker} M.`;
+    actions.appendChild(button(`Entrar a meias (${half} M)`, () =>
+      dispatch({ type: 'partnerReply', playerId: asked, accept: true })));
+    actions.appendChild(button('Recusar', () =>
+      dispatch({ type: 'partnerReply', playerId: asked, accept: false }), 'secondary'));
+    wrap.appendChild(prompt);
+    if (notice) {
+      const err = el('div', 'prompt', notice);
+      err.style.borderLeftColor = '#b00';
+      wrap.appendChild(err);
+    }
+    wrap.appendChild(actions);
     return wrap;
   }
 
@@ -558,19 +585,41 @@ function controls(s: GameState): HTMLElement {
     }
 
     case 'buyTankerChoice': {
+      // `willing` is set once the table has been asked, so the offer is not repeated.
+      const alreadyAsked = pending.willing !== undefined;
+      const halfBank = Math.ceil(PRICES.tanker / 2);
       prompt.textContent =
-        `Pode comprar um petroleiro por ${PRICES.tanker} M (lucro anual ${100} M). ` +
-        'Se não tiver capital, pode fazê-lo em sociedade a meias.';
+        `Pode comprar um petroleiro por ${PRICES.tanker} M (lucro anual ${ANNUAL_PROFIT.tanker} M). ` +
+        (alreadyAsked
+          ? 'Ninguém quis entrar a meias — resta comprar sozinho ou com o banco.'
+          : 'Se não tiver capital, pode perguntar quem entra a meias consigo.');
       actions.appendChild(button(`Comprar sozinho (${PRICES.tanker} M)`, () =>
         dispatch({ type: 'buyTanker', partner: null })));
-      for (const other of s.players) {
-        if (other.id === s.currentPlayer || other.bankrupt) continue;
-        actions.appendChild(button(`Sociedade com ${other.company}`, () =>
-          dispatch({ type: 'buyTanker', partner: other.id }), 'secondary'));
+      if (!alreadyAsked) {
+        actions.appendChild(button('Perguntar quem entra a meias', () =>
+          dispatch({ type: 'seekPartner' }), 'secondary'));
       }
-      actions.appendChild(button('Sociedade com o banco', () =>
+      actions.appendChild(button(`Sociedade com o banco (${halfBank} M)`, () =>
         dispatch({ type: 'buyTanker', partner: 'bank' }), 'secondary'));
+      actions.appendChild(button('Não comprar', () => dispatch({ type: 'declineTanker' }), 'secondary'));
       actions.appendChild(negotiateButtons(s));
+      break;
+    }
+
+    case 'choosePartner': {
+      const half = Math.ceil(PRICES.tanker / 2);
+      prompt.textContent =
+        'Aceitaram entrar a meias no petroleiro. Escolha o sócio — cada um paga metade ' +
+        `e o lucro anual de ${ANNUAL_PROFIT.tanker} M é repartido.`;
+      for (const w of pending.willing) {
+        actions.appendChild(button(`Sociedade com ${s.players[w]?.company} (${half} M)`, () =>
+          dispatch({ type: 'buyTanker', partner: w })));
+      }
+      actions.appendChild(button(`Comprar sozinho (${PRICES.tanker} M)`, () =>
+        dispatch({ type: 'buyTanker', partner: null }), 'secondary'));
+      actions.appendChild(button(`Sociedade com o banco (${half} M)`, () =>
+        dispatch({ type: 'buyTanker', partner: 'bank' }), 'secondary'));
+      actions.appendChild(button('Não comprar', () => dispatch({ type: 'declineTanker' }), 'secondary'));
       break;
     }
 
