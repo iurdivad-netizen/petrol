@@ -150,7 +150,8 @@ function payAnnualProfits(state: GameState, reason: string): void {
     const gross = annualProfitFor(state, p.id);
     if (gross <= 0) continue;
     const paid = receiveFromBank(state, p.id, gross);
-    log(state, p.id, `${reason}: ${p.company} recebeu ${paid} M.`);
+    // The log prefixes the company, so the message names only the event.
+    log(state, p.id, `${reason}: recebeu ${paid} M.`);
   }
 }
 
