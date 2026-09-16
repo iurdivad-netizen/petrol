@@ -14,7 +14,7 @@ import { tally } from '../engine/economy';
 import { idleLicences, toweredSites } from '../engine/spaces';
 import { ANNUAL_PROFIT, CARD_NAMES, COMPANIES, DEPOSIT_NAMES, PRICES, SPACE_NAMES, SECOND_PASSAGEM_MAX_PLAYERS } from '../data/rules';
 import { MAP, TRACK } from '../data/board';
-import { companyColour, renderBoard } from './board-view';
+import { caption, companyColour, renderBoard } from './board-view';
 import { priceCard, rulesContent } from './rules-view';
 import { AI_LEVELS, aiAction, yearsRemaining } from '../engine/ai';
 import type { AiConfig } from '../engine/ai';
@@ -777,11 +777,36 @@ function negotiateButtons(s: GameState): HTMLElement {
   return frag;
 }
 
+/**
+ * Who resolves the square the marker is about to land on. Bankrupt companies
+ * are skipped, exactly as the turn order does.
+ */
+function nextLivePlayer(s: GameState): number {
+  const n = s.players.length;
+  for (let step = 1; step <= n; step++) {
+    const id = (s.currentPlayer + step) % n;
+    const q = s.players[id];
+    if (q && !q.bankrupt && q.turnsTaken < s.turnsPerPlayer) return id;
+  }
+  return s.currentPlayer;
+}
+
+/** Outlines one track cell in place — no repaint, so hovering stays cheap. */
+function highlightTrackCell(index: number | null): void {
+  document.querySelectorAll('.cell.destination').forEach((node) => {
+    node.classList.remove('destination');
+  });
+  if (index === null) return;
+  document.querySelector(`.cell[data-track="${index}"]`)?.classList.add('destination');
+}
+
 function handView(s: GameState): HTMLElement {
   const p = s.players[s.currentPlayer]!;
   const wrap = el('div');
   wrap.appendChild(el('h3', undefined, `Mão de ${p.company}`));
   const hand = el('div', 'hand');
+
+  const next = s.players[nextLivePlayer(s)];
 
   for (const card of p.hand) {
     const c = el('button', 'card');
@@ -797,6 +822,21 @@ function handView(s: GameState): HTMLElement {
     const usable = canUseCard(s, card);
     body.appendChild(el('div', 'muted', usable ? 'Pode utilizar' : 'Só para negociar'));
 
+    /*
+     * The move on a card chooses the SUCCESSOR's square, not your own — the
+     * single thing hardest to see from the table. Name the square it lands on
+     * and mark it on the board while the card is under the cursor.
+     */
+    const destIndex = (s.markerPos + card.move) % TRACK.cells.length;
+    const dest = TRACK.cells[destIndex];
+    if (dest) {
+      const lands = el('div', 'lands');
+      lands.append(`${next?.company ?? 'Segue'} → ${dest.space}`);
+      lands.appendChild(el('span', 'lands-name', caption(dest.space)));
+      body.appendChild(lands);
+      c.title = `Deixa o marcador na casa ${dest.space} — ${SPACE_NAMES[dest.space] ?? ''}`;
+    }
+
     // Right edge: AVANCE (n) CASAS.
     const right = el('div', 'edge right');
     right.append('Avance');
@@ -804,7 +844,15 @@ function handView(s: GameState): HTMLElement {
     right.append('Casas');
 
     c.append(left, body, right);
-    c.addEventListener('click', () => dispatch({ type: 'playCard', cardId: card.id }));
+    const mark = (on: boolean) => highlightTrackCell(on ? destIndex : null);
+    c.addEventListener('pointerenter', () => mark(true));
+    c.addEventListener('pointerleave', () => mark(false));
+    c.addEventListener('focus', () => mark(true));
+    c.addEventListener('blur', () => mark(false));
+    c.addEventListener('click', () => {
+      mark(false);
+      dispatch({ type: 'playCard', cardId: card.id });
+    });
     hand.appendChild(c);
   }
   wrap.appendChild(hand);

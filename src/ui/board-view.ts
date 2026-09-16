@@ -29,7 +29,7 @@ export function trackPosition(index: number): { col: number; row: number } {
 }
 
 /** Short caption under the space number, so the board reads without the rulebook. */
-function caption(space: number): string {
+export function caption(space: number): string {
   const full = SPACE_NAMES[space] ?? '';
   return full.length > 22 ? full.slice(0, 20) + '…' : full;
 }
@@ -56,6 +56,9 @@ export function renderBoard(state: GameState, handlers: BoardHandlers = {}): HTM
     if (cell.index === state.markerPos) el.classList.add('current');
     el.style.gridColumn = String(col);
     el.style.gridRow = String(row);
+    // Lets the hand highlight where a card would leave the marker, without
+    // repainting the whole board on every hover.
+    el.dataset['track'] = String(cell.index);
     el.title = `${cell.space} — ${SPACE_NAMES[cell.space] ?? ''}${cell.verified ? '' : ' (leitura provisória)'}`;
 
     const num = document.createElement('div');
