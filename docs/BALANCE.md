@@ -42,6 +42,7 @@ Per game at 4 players, summed across all companies:
 | Effect | Value | Direction |
 | --- | --- | --- |
 | Annual profits forgone while nationalised | **92** | cost |
+| &nbsp;&nbsp;— of which is tanker income | *59* | see note |
 | End-of-game halving of deposits and trucks | **≈11** | cost |
 | Board bills paid at half | **14** | benefit |
 | ~~Assets bought at half list price~~ | ~~17~~ | removed, see §4 |
@@ -50,6 +51,15 @@ Net: roughly **90 per game** once the price-list defect is corrected, borne by a
 1.4 companies. That matches the observed spread directly: at 4 players, mean total
 **294** for a company that ends nationalised against **338** for one that does not —
 a gap of 44, up from 33 before the fix.
+
+Most of that forgone income is a tanker's. Space 13 says tankers are not
+nationalised, and a second interpretation decides how far that reaches: it is read
+here as covering the **red markers and the scoring**, not the cash flow, so a
+nationalised company still collects half of a tanker's 100 and pays half of the 50 M
+storm. Reading the specific exemption as overriding the general "half of everything"
+would hand back 59 M a game at four players and 137 M at six — the single largest
+remaining lever on how hard nationalisation bites. Weighed and not taken; recorded in
+RULES.md §9 and pinned by a test, so it cannot drift back by accident.
 
 **The end-of-game halving is not the mechanism.** It removes a mean of **8** from a
 nationalised company's total, about 2.5% of it. Nationalisation hurts almost entirely

@@ -166,6 +166,38 @@ describe('nationalisation (RULES.md §9, spaces 13 and 17)', () => {
   });
 
   /*
+   * "Tankers are not nationalised" is read as being about red markers and
+   * scoring, not about the cash flow: the company still receives and pays half
+   * of everything while the state runs it, tanker money included. Deliberate,
+   * flagged in RULES.md §9 — the alternative reading (specific beats general,
+   * so tanker income is exempt) is worth about 59 M a game at four players.
+   */
+  it('halves tanker income too, though the tanker itself is never marked', () => {
+    const s = game(2);
+    const site = giveLicence(s, 0, 'land');
+    site.deposit = 'oil6MT';
+    s.vehicles.push({ id: 't', kind: 'tanker', siteId: null, ownerId: 0, partner: null });
+    s.players[0]!.nationalised = true;
+    const gross = ANNUAL_PROFIT.tanker + ANNUAL_PROFIT.oil6MT;
+    expect(annualProfitFor(s, 0)).toBe(gross);
+
+    const before = s.players.map((p) => p.cash);
+    s.pending = { kind: 'none' };
+    s.discard.push({ id: 'lap', type: 'petroleiro', move: 48 });
+    s.phase = 'advance';
+    applyAction(s, { type: 'advance' });
+    // Half of the whole payout, not the deposit's share alone.
+    expect(s.players[0]!.cash).toBe(before[0]! + Math.floor(gross / 2));
+    // And the tanker's own disaster is halved to match.
+    const owed = s.players[0]!.cash;
+    s.currentPlayer = 0; // the lap ended the turn; the storm is still theirs
+    beginSpace(s, 4);
+    expect(owed - s.players[0]!.cash).toBe(25);
+    // The scoring exemption is a separate question and still holds.
+    expect(scorePlayer(s, 0).vehicles).toBe(PRICES.tanker);
+  });
+
+  /*
    * The halving covers what the board imposes — profits collected and losses
    * suffered — not what goods cost. Routing purchases through payBank let a
    * nationalised company buy at half the list price and score the asset at
