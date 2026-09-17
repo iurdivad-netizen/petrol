@@ -131,18 +131,38 @@ describe('nationalisation (RULES.md §9, spaces 13 and 17)', () => {
     expect(s.players[0]!.nationalised).toBe(false);
   });
 
-  it('halves deposits and trucks at scoring, but not tankers or cash', () => {
+  /*
+   * "Só contará metade dos seus bens" — half its ASSETS. §11 enumerates
+   * cheques apart from the assets, and space 13 exempts tankers outright, so
+   * towers, deposits and trucks are what the clause can reach.
+   */
+  it('halves towers, deposits and trucks at scoring, but not tankers or cash', () => {
     const s = game(2);
-    const site = giveLicence(s, 0, 'land');
-    site.deposit = 'oil6MT';
+    const drilled = giveLicence(s, 0, 'land');
+    drilled.deposit = 'oil6MT';
+    const standing = giveLicence(s, 0, 'sea');
+    standing.tower = true;
+    const truckSite = giveLicence(s, 0, 'land');
     s.vehicles.push({ id: 't', kind: 'tanker', siteId: null, ownerId: 0, partner: null });
+    s.vehicles.push({ id: 'c', kind: 'truck', siteId: truckSite.id, ownerId: 0, partner: null });
+
     const plain = scorePlayer(s, 0);
+    expect(plain.towers).toBeGreaterThan(0);
     s.players[0]!.nationalised = true;
     const nat = scorePlayer(s, 0);
+
     expect(nat.deposits).toBe(Math.floor(plain.deposits / 2));
+    expect(nat.towers).toBe(Math.floor(plain.towers / 2));
     expect(nat.cash).toBe(plain.cash);
-    // The tanker is explicitly exempt from nationalisation.
-    expect(nat.vehicles).toBe(plain.vehicles);
+    // The tanker is explicitly exempt; the truck beside it is not, so the
+    // vehicle line falls by exactly the truck's half.
+    expect(nat.vehicles).toBe(plain.vehicles - Math.ceil(PRICES.truck / 2));
+    expect(nat.total).toBe(
+      plain.total
+        - (plain.deposits - nat.deposits)
+        - (plain.towers - nat.towers)
+        - (plain.vehicles - nat.vehicles),
+    );
   });
 
   /*

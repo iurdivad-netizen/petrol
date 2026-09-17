@@ -72,35 +72,48 @@ Towers at **0.00** is not a defect. Over 1,600 company-ends, not one tower survi
 play, since a tower earns nothing per year and only a deposit does. Peak towers alive
 on the board at any moment averages 2.1.
 
-## 3. The scoring interpretation is the one thing that would change games
+## 3. The scoring interpretation — settled, and what it cost
 
-`src/engine/scoring.ts` carries a flagged interpretation: the booklet's *"só contará
-metade"* is applied to deposits and trucks, not to cash, towers or tankers. The
-alternative reading — halve the company's entire final total — **changes the winner in
-89 of 400 games (22%)**.
+`src/engine/scoring.ts` halves a nationalised company's **towers, deposits and
+trucks**, leaving **cash and tankers** whole. Three readings of *"só contará metade dos
+seus bens"* were on the table:
 
-That is not a detail. It is the single largest open rules question in the codebase,
-because cash is 222 of a 320 mean total: halving it is a different game.
+| Reading | What halves | Games whose winner changes |
+| --- | --- | --- |
+| **Adopted** | towers + deposits + trucks | — |
+| Marker-based (the code until now) | deposits + trucks | 0 of 400 |
+| Whole total | everything, cash included | **89 of 400 (22%)** |
 
-The current reading is the better-supported one, and I would not change it:
+**Why the adopted reading.** §11 as transcribed says a nationalised company "counts
+only half its **assets**", and the same section lists the winner's total as "towers +
+oil and gas reservoirs + tankers + trucks + **cheques**" — cheques enumerated apart
+from the assets. Space 13 states outright that tankers are not nationalised. Towers,
+deposits and trucks are what is left.
 
-- §11 as transcribed says a nationalised company "counts only half its **assets**",
-  and the same section lists the winner's total as "towers + oil and gas reservoirs +
-  tankers + trucks + **cheques**" — cheques enumerated separately from the assets.
-- Space 13 places a red marker "beside every oil and gas deposit and every truck",
-  and states that tankers are not nationalised. The halving is described against
-  specific pieces on the board, not against a company's balance.
-- The in-play halving already charges nationalisation against every profit the
-  company collects. Halving the accumulated cash as well charges the same thing twice.
+**Why not the whole total.** It is a different game: cash is 222 of a 320 mean total,
+so halving it swings a fifth of all games. It also charges nationalisation twice —
+`receiveFromBank` has already taken half of every profit the company collected on its
+way in. The clause reads as a statement about what the pieces on the board are worth,
+not about the balance sheet.
 
-[Likely], not [Certain]: the clause is short and the reading turns on whether
-"cheques" count as assets. What would settle it is a photograph of the booklet's
-scoring paragraph in the original Portuguese, or any published play report.
+**Why not marker-based.** Space 13 places a red marker "beside every oil and gas
+deposit and every truck". That is the bookkeeping for the *in-play* halving — the
+marker tells the banker which income to halve — and reading it as the definition of
+the scoring clause makes §11's word "assets" do no work. Towers are assets, count at
+their purchase price, and are not among the exemptions.
 
-One narrower gap, noted for completeness: the current code omits **towers** from the
-halving, on the marker-based rationale. The "half its assets" reading would include
-them. Since no tower has ever survived to scoring in 1,600 measured company-ends, the
-distinction is worth exactly nothing in play, and is not worth resolving.
+Including towers cost nothing measurable, exactly as expected: across 300 games at
+each player count, **not one nationalised company ended holding a tower**, and every
+win share is unchanged to three decimals. A tower earns nothing per year and is
+converted into a deposit as soon as a deposit card allows. The line is there to make
+the rule right in human play, where a tower can easily be standing when the deck runs
+out.
+
+[Likely], not [Certain]. The clause is short, and the reading turns on whether
+"cheques" count among a company's *bens*. What would settle it is a photograph of the
+booklet's scoring paragraph in the original Portuguese, or any published play report.
+The whole-total reading is a two-line change in `scorePlayer` if that evidence ever
+turns up.
 
 ## 4. A defect found while measuring — now fixed
 

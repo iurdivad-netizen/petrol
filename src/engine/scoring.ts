@@ -4,11 +4,27 @@
  * Assets count at their fixed purchase price. Licences are worth nothing.
  *
  * INTERPRETATION, flagged: the booklet says a still-nationalised company
- * "só contará metade". Red markers are placed beside deposits and trucks only,
- * and tankers are explicitly exempt from nationalisation, so the halving is
- * applied to deposits and trucks — not to tankers, towers or cash. The
- * alternative reading (halve the company's entire final total) is a one-line
- * change in `scorePlayer`.
+ * "só contará metade **dos seus bens**" — half its ASSETS. §11 lists the
+ * winning total as "torres + reservatórios + petroleiros + camiões + cheques",
+ * enumerating cheques apart from the assets, so cash is not halved; and space
+ * 13 states outright that tankers are not nationalised. What remains is
+ * towers, deposits and trucks, and all three are halved here.
+ *
+ * Two readings were weighed and rejected:
+ *
+ *  - Halving the company's entire final total, cash included. It changes the
+ *    winner in 89 of 400 measured games, and charges nationalisation twice
+ *    over, since `receiveFromBank` has already taken half of every profit the
+ *    company collected (docs/BALANCE.md §3).
+ *  - Halving only what carries a red marker — deposits and trucks — which is
+ *    what this file did until now. It reads the marker rule of space 13 as
+ *    the definition of the scoring clause rather than as its bookkeeping.
+ *
+ * The towers line is the one that changed, and it is worth nothing in play:
+ * across 1,600 measured company-ends not one tower survived to scoring,
+ * because a tower earns nothing per year and is converted into a deposit as
+ * soon as a deposit card allows. It is here to make the rule right, not to
+ * move a game.
  */
 
 import { PRICES } from '../data/rules';
@@ -49,8 +65,10 @@ export function scorePlayer(state: GameState, id: PlayerId): Score {
   }
 
   if (p.nationalised) {
+    // Half its assets: towers, deposits and trucks. Cash and tankers stand.
     deposits = halveReceipt(deposits);
     trucks = halveReceipt(trucks);
+    towers = halveReceipt(towers);
   }
 
   const total = p.cash + deposits + towers + vehicleTotal + trucks;

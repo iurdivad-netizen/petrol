@@ -346,6 +346,13 @@
     "excludesPriceList": true,
     "excludesPriceListNote": "INTERPRETATION, medium confidence: the halving covers profits collected and losses imposed by the board, not the price of goods a company chooses to buy or sell back. Halving purchases would let a nationalised company buy an asset at half price and score it at the full purchase price (§11).",
     "scoringWhileNationalised": 0.5,
+    "scoringAppliesTo": [
+      "towers",
+      "oilReservoirs",
+      "gasReservoirs",
+      "tankTrucks"
+    ],
+    "scoringNote": "INTERPRETATION, medium confidence: \"só contará metade dos seus bens\" halves ASSETS. \u00a711 enumerates cheques apart from the assets, so cash is not halved, and space 13 exempts tankers outright. Towers are included although they carry no red marker: the marker rule is the bookkeeping for the in-play halving, not the definition of the scoring clause. The alternative reading, halving the entire final total, changes the winner in 89 of 400 measured games.",
     "clearedBy": "space 17 — Livre Empresa"
   },
   "board": {

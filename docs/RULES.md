@@ -285,7 +285,14 @@ the opportunity is lost.
   trucks + cheques**.
 - Assets count at their **fixed purchase price** as listed in §8.
 - **Licences have no value at scoring.**
-- A still-nationalised company counts only **half** its assets.
+- A still-nationalised company counts only **half** its assets: **towers, oil and gas
+  reservoirs, and trucks**. **Interpretation (medium confidence):** the clause says
+  *assets*, and the winner line above enumerates **cheques** apart from them, so cash is
+  not halved; space 13 states outright that **tankers are not nationalised**. The
+  alternative reading — halving the company's entire final total, cash included —
+  changes the winner in 89 of 400 measured games and charges nationalisation twice,
+  since every profit the company collected was already halved as it came in
+  ([docs/BALANCE.md](BALANCE.md) §3).
 
 ---
 
