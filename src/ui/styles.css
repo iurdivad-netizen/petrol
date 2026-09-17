@@ -343,6 +343,49 @@ h1, h2, h3 { margin: 0 0 8px; letter-spacing: 0.04em; }
 }
 .card:hover .lands, .card:focus .lands { color: #a05c00; }
 
+/* A rule worth reading twice inside the rulebook. */
+.rule-callout {
+  border-left: 4px solid var(--ochre);
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 0 6px 6px 0;
+  padding: 10px 12px;
+  margin: 10px 0 14px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+/* ------------------------------------------------------- tanker ventures */
+
+/*
+ * One block per venture. With two or more on the table the player has to see
+ * WHICH tanker a "buy the other half" refers to, so each carries its number,
+ * its partner and whose licence commands it.
+ */
+.ventures { margin-top: 12px; }
+.ventures-head {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+  margin-bottom: 6px;
+}
+.venture {
+  border: 1px solid var(--rule);
+  border-left: 4px solid var(--teal);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  background: rgba(0, 0, 0, 0.03);
+}
+.venture-head { font-size: 13px; margin-bottom: 2px; }
+.venture-tag {
+  font-weight: 700;
+  margin-right: 4px;
+}
+.venture .actions { margin-top: 6px; gap: 6px; }
+.venture .actions button { padding: 6px 10px; font-size: 13px; }
+
 /* --------------------------------------------------------------- actions */
 
 .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }

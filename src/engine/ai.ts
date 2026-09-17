@@ -474,6 +474,12 @@ export function aiAction(state: GameState, config: AiConfig = AI_LEVELS.magnata!
         if (v.kind !== 'tanker') continue;
         if (v.ownerId !== me.id && v.partner !== me.id) continue;
         const other = v.ownerId === me.id ? v.partner : v.ownerId;
+        // Buying the bank out is a plain gain and needs nobody's consent: the
+        // half costs 150 and is worth 150 at scoring plus the income it still
+        // earns. Only the 50 M storm has to stay covered.
+        if (other === 'bank' && me.cash >= stake + TANKER_REPAIR_BILL) {
+          return { type: 'buyOutBank', vehicleId: v.id };
+        }
         if (typeof other !== 'number') continue;
         const refused = (v.dissolutionRefusals ?? []).includes(me.id);
         // Selling is a last resort: it is score-neutral and costs the

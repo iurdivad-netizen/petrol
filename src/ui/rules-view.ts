@@ -138,6 +138,16 @@ function spaceEffect(id: number): string {
   }
 }
 
+/** A rule worth reading twice, set apart from the running text. */
+function callout(title: string, text: string): HTMLElement {
+  const box = document.createElement('div');
+  box.className = 'rule-callout';
+  const h = document.createElement('strong');
+  h.textContent = title;
+  box.append(h, document.createTextNode(' ' + text));
+  return box;
+}
+
 function section(title: string): HTMLElement {
   const h = document.createElement('h3');
   h.textContent = title;
@@ -179,6 +189,13 @@ export function rulesContent(playerCount: number): HTMLElement {
     'Cumpre o que ela diz, se puder e quiser — ou vende-a em leilão a outra companhia.',
     'Avança o marcador as casas que a carta indicar. É assim que escolhe a casa do jogador seguinte.',
   ], true));
+  wrap.appendChild(callout(
+    'A casa que joga não é a sua.',
+    'O marcador só avança no fim da sua vez, portanto a casa onde ele para — e tudo o que ' +
+    'ela mande pagar ou permita comprar — cai sobre o jogador seguinte, não sobre si. ' +
+    'A casa que cumpre no início da sua vez foi escolhida pela carta do jogador anterior. ' +
+    'Passe o rato por uma carta da mão para ver, no tabuleiro, onde ela deixaria o marcador.',
+  ));
 
   wrap.appendChild(section('Para ter um depósito a render'));
   wrap.appendChild(list([

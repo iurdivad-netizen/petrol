@@ -483,6 +483,8 @@ function controls(s: GameState): HTMLElement {
 
   const prompt = el('div', 'prompt');
   const actions = el('div', 'actions');
+  /** Anything a phase wants below the buttons — the ventures panel, so far. */
+  let extra: HTMLElement | null = null;
   const chosen = [...selected];
 
   if (s.phase === 'gameOver') {
@@ -688,7 +690,7 @@ function controls(s: GameState): HTMLElement {
             ? `Tire uma carta do baralho (${s.deck.length} restantes).`
             : 'O baralho acabou — jogue das cartas que tem na mão.';
           actions.appendChild(button('Tirar carta', () => dispatch({ type: 'drawCard' })));
-          actions.appendChild(dissolveButtons(s));
+          extra = dissolvePanel(s);
           break;
         case 'playCard':
           prompt.textContent = 'Escolha a carta que quer jogar.';
@@ -731,6 +733,7 @@ function controls(s: GameState): HTMLElement {
     wrap.appendChild(err);
   }
   wrap.appendChild(actions);
+  if (extra) wrap.appendChild(extra);
 
   if (s.phase === 'playCard') wrap.appendChild(handView(s));
   return wrap;
@@ -738,34 +741,56 @@ function controls(s: GameState): HTMLElement {
 
 /**
  * Dissolution offers for the current player's tanker ventures, available at the
- * start of their turn. The partner has first refusal; only once they have said
- * no does the sale to the bank appear (§8).
+ * start of their turn (§8). One labelled block per venture: with two or more
+ * on the table, a bare row of buttons gave no way to tell which tanker a
+ * "buy the other half" applied to.
  */
-function dissolveButtons(s: GameState): HTMLElement {
-  const frag = el('span');
+function dissolvePanel(s: GameState): HTMLElement {
+  const wrap = el('div', 'ventures');
   const me = s.currentPlayer;
   const stake = Math.floor(PRICES.tanker / 2);
-  for (const v of s.vehicles) {
-    if (v.kind !== 'tanker' || v.partner === null) continue;
-    if (v.ownerId !== me && v.partner !== me) continue;
+
+  // Numbered in the order the company bought them, so the label is stable.
+  const mine = s.vehicles.filter(
+    (v) => v.kind === 'tanker' && v.partner !== null && (v.ownerId === me || v.partner === me),
+  );
+  if (mine.length === 0) return wrap;
+
+  wrap.appendChild(el('div', 'ventures-head',
+    mine.length === 1 ? 'A sua sociedade' : `As suas ${mine.length} sociedades`));
+
+  mine.forEach((v, i) => {
+    const row = el('div', 'venture');
     const other = v.ownerId === me ? v.partner : v.ownerId;
-    if (typeof other !== 'number') {
-      frag.appendChild(button(`Desfazer sociedade com o banco (${stake} M)`, () =>
+    const withWhom = other === 'bank' ? 'o banco' : s.players[other as number]?.company ?? '';
+    // Whose licence sits on top decides who commands the venture (§8).
+    const role = v.ownerId === me ? 'a sua licença comanda' : `licença de ${s.players[v.ownerId]?.company}`;
+
+    const title = el('div', 'venture-head');
+    title.appendChild(el('span', 'venture-tag', `Petroleiro ${i + 1}`));
+    title.append(` a meias com ${withWhom} — ${role}`);
+    row.appendChild(title);
+
+    const acts = el('div', 'actions');
+    if (other === 'bank') {
+      acts.appendChild(button(`Comprar ao banco a outra metade (${stake} M)`, () =>
+        dispatch({ type: 'buyOutBank', vehicleId: v.id })));
+      acts.appendChild(button(`Vender ao banco a minha metade (${stake} M)`, () =>
         dispatch({ type: 'dissolvePartnership', vehicleId: v.id }), 'secondary'));
-      continue;
-    }
-    const name = s.players[other]?.company ?? '';
-    if ((v.dissolutionRefusals ?? []).includes(me)) {
-      frag.appendChild(button(`Vender ao banco a parte do petroleiro (${stake} M)`, () =>
+    } else if ((v.dissolutionRefusals ?? []).includes(me)) {
+      acts.appendChild(el('span', 'muted', `${withWhom} recusou. `));
+      acts.appendChild(button(`Vender ao banco a minha metade (${stake} M)`, () =>
         dispatch({ type: 'dissolvePartnership', vehicleId: v.id }), 'secondary'));
-      continue;
+    } else {
+      acts.appendChild(button(`Comprar a metade de ${withWhom} (${stake} M)`, () =>
+        dispatch({ type: 'proposeDissolution', vehicleId: v.id, offer: 'buy' }), 'secondary'));
+      acts.appendChild(button(`Vender a minha metade a ${withWhom} (${stake} M)`, () =>
+        dispatch({ type: 'proposeDissolution', vehicleId: v.id, offer: 'sell' }), 'secondary'));
     }
-    frag.appendChild(button(`Comprar a parte de ${name} (${stake} M)`, () =>
-      dispatch({ type: 'proposeDissolution', vehicleId: v.id, offer: 'buy' }), 'secondary'));
-    frag.appendChild(button(`Vender a ${name} a minha parte (${stake} M)`, () =>
-      dispatch({ type: 'proposeDissolution', vehicleId: v.id, offer: 'sell' }), 'secondary'));
-  }
-  return frag;
+    row.appendChild(acts);
+    wrap.appendChild(row);
+  });
+  return wrap;
 }
 
 /** Offer-for-sale and forfeit buttons, available whenever a card is unresolved. */

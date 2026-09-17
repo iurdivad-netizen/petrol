@@ -481,6 +481,30 @@ export function applyAction(state: GameState, action: Action): ActionResult {
       return ok;
     }
 
+    case 'buyOutBank': {
+      /*
+       * The dissolution clause is general — "offering to buy your partner's
+       * share or sell your own" — and a partnership with the bank is still a
+       * partnership. The bank has no preferences to consult, so it always
+       * sells. INTERPRETATION, medium confidence: the booklet spells out only
+       * the sale TO the bank, because that is the branch a player has to be
+       * told about; the purchase back is the same clause read the other way.
+       */
+      if (state.phase !== 'draw') return fail('Só pode dissolver no início do seu turno.');
+      const v = state.vehicles.find((x) => x.id === action.vehicleId);
+      if (!v || v.kind !== 'tanker') return fail('Petroleiro inválido.');
+      if (v.partner !== 'bank') return fail('Este petroleiro não está a meias com o banco.');
+      if (v.ownerId !== id) return fail('Não é sócio deste petroleiro.');
+      const stake = Math.floor(PRICES.tanker / 2);
+      if (p.cash < stake) return fail('Capital insuficiente.');
+      payPrice(state, id, stake);
+      // The green marker goes back and the licence stands alone in the porto.
+      v.partner = null;
+      delete v.dissolutionRefusals;
+      log(state, id, `Comprou ao banco a outra metade do petroleiro por ${stake} M.`);
+      return ok;
+    }
+
     case 'dissolvePartnership': {
       if (state.phase !== 'draw') return fail('Só pode dissolver no início do seu turno.');
       const v = state.vehicles.find((x) => x.id === action.vehicleId);

@@ -329,7 +329,8 @@
       }
     ],
     "partnerChoice": "if more than one company is interested, the buyer chooses; if none, deal with the bank",
-    "dissolution": "On your turn, offer to buy the partner's share or sell your own. If the partner declines you may sell your share to the bank: withdraw your licence and place a green marker. The ex-partner then partners with the bank."
+    "dissolution": "On your turn, offer to buy the partner's share or sell your own. If the partner declines you may sell your share to the bank: withdraw your licence and place a green marker. The ex-partner then partners with the bank.",
+    "buyOutBank": "INTERPRETATION, medium confidence: a company may also buy the bank's half back for half the tanker price, taking up the green marker and owning the tanker outright. The dissolution clause is general and a bank partnership is still a partnership; the booklet spells out only the sale to the bank because that is the branch a player must be told about. The bank has no preferences, so it always sells."
   },
   "nationalisation": {
     "marker": "red",

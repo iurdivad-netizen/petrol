@@ -38,7 +38,9 @@ export type Action =
   | { type: 'proposeDissolution'; vehicleId: string; offer: 'buy' | 'sell' }
   | { type: 'dissolveReply'; playerId: PlayerId; accept: boolean }
   /** Sell your half of a tanker venture to the bank (§8). */
-  | { type: 'dissolvePartnership'; vehicleId: string };
+  | { type: 'dissolvePartnership'; vehicleId: string }
+  /** Buy the bank's half of a tanker venture back, ending it (§8). */
+  | { type: 'buyOutBank'; vehicleId: string };
 
 export interface ActionResult {
   ok: boolean;

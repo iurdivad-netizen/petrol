@@ -224,6 +224,12 @@ you may form a partnership:
 - On your turn you may dissolve it, offering to buy your partner's share or sell your own.
   If the partner is uninterested you may sell your share to the bank: withdraw your licence
   and place a green marker. Your ex-partner thereafter partners with the bank.
+- **Interpretation (medium confidence):** the dissolution clause is general — "buy your
+  partner's share or sell your own" — and a partnership with the bank is still a
+  partnership, so a company may also **buy the bank's half back** for 150, take up the
+  green marker and own the tanker outright. The booklet spells out only the sale *to* the
+  bank, which is the branch a player has to be told about; the purchase back is the same
+  sentence read the other way. The bank has no preferences to consult, so it always sells.
 
 ### Trucks
 

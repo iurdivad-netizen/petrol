@@ -5,7 +5,7 @@ import { actingPlayer, applyAction } from '../src/engine/engine';
 import { annualProfitFor, payBank, receiveFromBank, tally } from '../src/engine/economy';
 import { scorePlayer, winners } from '../src/engine/scoring';
 import { beginSpace } from '../src/engine/spaces';
-import { COMPANIES, DEPOSIT_NAMES, PRICES, STARTING_CAPITAL } from '../src/data/rules';
+import { ANNUAL_PROFIT, COMPANIES, DEPOSIT_NAMES, PRICES, STARTING_CAPITAL } from '../src/data/rules';
 import { truckSiteAvailable } from '../src/engine/engine';
 import type { GameState } from '../src/engine/types';
 import type { Action } from '../src/engine/actions';
@@ -678,6 +678,56 @@ describe('dissolving a tanker venture (RULES.md §8)', () => {
     applyAction(s, { type: 'dissolveReply', playerId: 1, accept: true });
     expect(s.vehicles[0]).toMatchObject({ ownerId: 0, partner: 1 });
     expect(s.players[1]!.cash).toBe(10);
+  });
+
+  /*
+   * The dissolution clause is general — buy your partner's share or sell your
+   * own — and a partnership with the bank is still a partnership. The bank has
+   * no preferences to consult, so it always sells.
+   */
+  describe('buying the bank out (RULES.md §8, medium confidence)', () => {
+    function bankVenture() {
+      const s = game(3);
+      s.phase = 'draw';
+      s.players[0]!.cash = 400;
+      s.vehicles.push({ id: 'tk', kind: 'tanker', siteId: null, ownerId: 0, partner: 'bank' });
+      return s;
+    }
+
+    it('costs half and leaves the tanker wholly owned', () => {
+      const s = bankVenture();
+      const stake = Math.floor(PRICES.tanker / 2);
+      expect(annualProfitFor(s, 0)).toBe(ANNUAL_PROFIT.tanker / 2);
+
+      expect(applyAction(s, { type: 'buyOutBank', vehicleId: 'tk' }).ok).toBe(true);
+      expect(s.players[0]!.cash).toBe(400 - stake);
+      expect(s.vehicles[0]).toMatchObject({ ownerId: 0, partner: null });
+      // The whole venture now: full income, and full purchase price at scoring.
+      expect(annualProfitFor(s, 0)).toBe(ANNUAL_PROFIT.tanker);
+      expect(scorePlayer(s, 0).vehicles).toBe(PRICES.tanker);
+    });
+
+    it('needs the money, the bank as partner, and your own licence on top', () => {
+      const poor = bankVenture();
+      poor.players[0]!.cash = 10;
+      expect(applyAction(poor, { type: 'buyOutBank', vehicleId: 'tk' }).ok).toBe(false);
+
+      const withCompany = game(3);
+      withCompany.phase = 'draw';
+      withCompany.players[0]!.cash = 400;
+      withCompany.vehicles.push({ id: 'tk', kind: 'tanker', siteId: null, ownerId: 0, partner: 1 });
+      expect(applyAction(withCompany, { type: 'buyOutBank', vehicleId: 'tk' }).ok).toBe(false);
+
+      const notMine = bankVenture();
+      notMine.vehicles[0]!.ownerId = 1;
+      expect(applyAction(notMine, { type: 'buyOutBank', vehicleId: 'tk' }).ok).toBe(false);
+    });
+
+    it('is a start-of-turn action like the rest of §8', () => {
+      const s = bankVenture();
+      s.phase = 'resolveCard';
+      expect(applyAction(s, { type: 'buyOutBank', vehicleId: 'tk' }).ok).toBe(false);
+    });
   });
 
   it('is a start-of-turn action, not something to do mid-card', () => {
