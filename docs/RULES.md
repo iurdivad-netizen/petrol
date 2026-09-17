@@ -250,7 +250,7 @@ count as an idle licence.
 | 10 | **Temporal — grandes prejuízos numa torre** | Pay bank 4. |
 | 11 | **Imposto de gás** | Pay 4 per gas deposit. |
 | 12 | **Desastre com um camião cisterna** | Pay bank 3. |
-| 13 | **Nacionalização** | The state nationalises your company. Place a **red marker** beside every oil and gas deposit and every truck you own or later acquire. **Tankers are not nationalised.** While nationalised you receive or pay **half** of everything. At game end a nationalised company also counts only half. |
+| 13 | **Nacionalização** | The state nationalises your company. Place a **red marker** beside every oil and gas deposit and every truck you own or later acquire. **Tankers are not nationalised.** While nationalised you receive or pay **half** of everything. At game end a nationalised company also counts only half. **Interpretation (medium confidence):** "half of everything" covers profits collected and losses the board imposes, **not the price list** — a nationalised company pays the full 7 for a land licence and receives the full 150 for half a tanker sold back. Halving purchases would let it buy at half price and score the asset at its full purchase price (§11). |
 | 14 | **Subida do preço do petróleo** | Receive per deposit: 2 M.T. → 4; 4 M.T. → 8; 6 M.T. → 12. |
 | 15 | **Incêndio num poço** | If you hold at least one licence with a tower, pay 4. |
 | 16 | **Poço seco** | One tower stopped producing: surrender that exploration licence **and** its tower to the bank. If you have no tower, nothing is owed. |

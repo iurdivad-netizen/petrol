@@ -343,6 +343,8 @@
       "oilTankers"
     ],
     "appliesToFutureAcquisitions": true,
+    "excludesPriceList": true,
+    "excludesPriceListNote": "INTERPRETATION, medium confidence: the halving covers profits collected and losses imposed by the board, not the price of goods a company chooses to buy or sell back. Halving purchases would let a nationalised company buy an asset at half price and score it at the full purchase price (§11).",
     "scoringWhileNationalised": 0.5,
     "clearedBy": "space 17 — Livre Empresa"
   },

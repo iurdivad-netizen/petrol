@@ -6,7 +6,9 @@
  *
  *  - A nationalised company receives and pays HALF of everything, until Livre
  *    Empresa clears it (RULES.md §9, spaces 13 and 17). The booklet is explicit:
- *    "só receberá ou pagará metade do que o jogo indicar".
+ *    "só receberá ou pagará metade do que o jogo indicar". That clause is about
+ *    what the GAME hands you and takes from you — profits and losses. It is not
+ *    a discount at the shop: see `payPrice`.
  *  - Rounding goes in the bank's favour (§9, space 8).
  */
 
@@ -52,6 +54,50 @@ export function payBank(state: GameState, id: PlayerId, amount: number): number 
   p.cash -= due;
   state.bank.cash += due;
   return due;
+}
+
+/**
+ * Pays the bank a price from the price list (§8): a licence, a tower, a
+ * deposit, a tanker, a truck.
+ *
+ * Deliberately NOT halved for a nationalised company. The halving covers what
+ * the board imposes — profits collected and losses suffered — not the cost of
+ * goods a company chooses to buy. Routing purchases through `payBank` let a
+ * nationalised company buy a 7 M licence for 4 M and then score it at 7 M,
+ * an arbitrage worth about 17 M a game (docs/BALANCE.md §4).
+ *
+ * Call sites check affordability at the full price first; the bankruptcy path
+ * is kept only so a missing check cannot silently underpay.
+ */
+export function payPrice(state: GameState, id: PlayerId, amount: number): number {
+  const p = player(state, id);
+  if (amount <= 0) return 0;
+  if (p.cash < amount) {
+    const remaining = p.cash;
+    p.cash = 0;
+    state.bank.cash += remaining;
+    bankrupt(state, id);
+    return remaining;
+  }
+  p.cash -= amount;
+  state.bank.cash += amount;
+  return amount;
+}
+
+/**
+ * The mirror of `payPrice`: the bank buys an asset back at its list price.
+ * Not halved either — a nationalised company that paid 300 for a tanker must
+ * get 150 for half of it, or the price list would run one way for it and the
+ * other way for everyone else.
+ */
+export function receivePrice(state: GameState, id: PlayerId, amount: number): number {
+  const p = player(state, id);
+  if (amount <= 0) return 0;
+  if (state.bank.cash < amount) borrowForBank(state, amount - state.bank.cash);
+  const paid = Math.min(amount, state.bank.cash);
+  state.bank.cash -= paid;
+  p.cash += paid;
+  return paid;
 }
 
 /** Moves money from the bank to a player, halving it if nationalised. */

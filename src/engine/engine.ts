@@ -20,9 +20,10 @@ import {
   annualProfitFor,
   halveReceipt,
   log,
-  payBank,
+  payPrice,
   player,
   receiveFromBank,
+  receivePrice,
 } from './economy';
 import { beginSpace, siteOccupiedByVehicle, surrenderSite, towerReadySites, toweredSites } from './spaces';
 import { winners } from './scoring';
@@ -306,7 +307,7 @@ export function applyAction(state: GameState, action: Action): ActionResult {
         const s = site(state, sid);
         if (!s || s.ownerId !== null || s.terrain !== terrain) return fail('Quadrado inválido.');
       }
-      payBank(state, id, price);
+      payPrice(state, id, price);
       for (const sid of action.siteIds) site(state, sid)!.ownerId = id;
       // The doubling right is spent by the first landing on a licence space,
       // taken or not: "se por acaso se esqueceu, perdeu a oportunidade" (§10).
@@ -332,7 +333,7 @@ export function applyAction(state: GameState, action: Action): ActionResult {
       const price = PRICES.tower[s.terrain];
       if (p.cash < price) return fail('Capital insuficiente.');
       if (state.bank.towers <= 0) return fail('Não há torres disponíveis.');
-      payBank(state, id, price);
+      payPrice(state, id, price);
       state.bank.towers -= 1;
       s.tower = true;
       log(state, id, `Comprou uma torre ${s.terrain === 'sea' ? 'no mar' : 'em terra'} por ${price} M.`);
@@ -493,7 +494,8 @@ export function applyAction(state: GameState, action: Action): ActionResult {
       // Sell your share to the bank: withdraw your licence, place a green
       // marker, and the other side thereafter partners with the bank (§8).
       const half = halveReceipt(PRICES.tanker);
-      receiveFromBank(state, id, half);
+      // A sale at the price list, not a profit: not halved again (§8).
+      receivePrice(state, id, half);
       if (v.ownerId === id) {
         if (typeof v.partner === 'number') {
           v.ownerId = v.partner;
@@ -519,7 +521,7 @@ export function applyAction(state: GameState, action: Action): ActionResult {
       const price = PRICES[deposit];
       if (p.cash < price) return fail('Capital insuficiente.');
       if (state.bank[deposit] <= 0) return fail('Não há depósitos disponíveis.');
-      payBank(state, id, price);
+      payPrice(state, id, price);
       // The tower goes back to the bank and the deposit takes its place (§7).
       s.tower = false;
       state.bank.towers += 1;
@@ -538,7 +540,7 @@ export function applyAction(state: GameState, action: Action): ActionResult {
         if (s.ownerId !== null) return fail('Quadrado já licenciado.');
         const price = PRICES.licence[s.terrain];
         if (p.cash < price) return fail('Capital insuficiente.');
-        payBank(state, id, price);
+        payPrice(state, id, price);
         s.ownerId = id;
         log(state, id, `Comprou uma licença ${s.terrain === 'sea' ? 'no mar' : 'em terra'} por ${price} M.`);
       } else {
@@ -547,7 +549,7 @@ export function applyAction(state: GameState, action: Action): ActionResult {
         const price = PRICES.tower[s.terrain];
         if (p.cash < price) return fail('Capital insuficiente.');
         if (state.bank.towers <= 0) return fail('Não há torres disponíveis.');
-        payBank(state, id, price);
+        payPrice(state, id, price);
         state.bank.towers -= 1;
         s.tower = true;
         log(state, id, `Comprou uma torre por ${price} M.`);
@@ -611,9 +613,9 @@ export function applyAction(state: GameState, action: Action): ActionResult {
         if (!agreed) return fail('Essa companhia não aceitou entrar a meias.');
         const other = player(state, partner);
         if (other.bankrupt || other.cash < Math.floor(PRICES.tanker / 2)) return fail('Sócio sem capital.');
-        payBank(state, partner, Math.floor(PRICES.tanker / 2));
+        payPrice(state, partner, Math.floor(PRICES.tanker / 2));
       }
-      payBank(state, id, share);
+      payPrice(state, id, share);
       state.bank.tankers -= 1;
       state.vehicles.push({
         id: `tanker-${state.vehicles.length}`,
@@ -643,7 +645,7 @@ export function applyAction(state: GameState, action: Action): ActionResult {
       if (!target || !truckSiteAvailable(state, target, id)) {
         return fail('Escolha um quadrado em terra, livre de torre e depósito.');
       }
-      payBank(state, id, PRICES.truck);
+      payPrice(state, id, PRICES.truck);
       state.bank.trucks -= 1;
       // The booklet gives the vehicle's licence free, so the square is licensed
       // to the buyer at no cost and the truck stands on it.

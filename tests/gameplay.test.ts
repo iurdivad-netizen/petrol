@@ -8,6 +8,7 @@ import { beginSpace } from '../src/engine/spaces';
 import { COMPANIES, DEPOSIT_NAMES, PRICES, STARTING_CAPITAL } from '../src/data/rules';
 import { truckSiteAvailable } from '../src/engine/engine';
 import type { GameState } from '../src/engine/types';
+import type { Action } from '../src/engine/actions';
 
 function game(players = 3, seed = 42): GameState {
   return createGame({ playerCount: players, seed });
@@ -142,6 +143,92 @@ describe('nationalisation (RULES.md §9, spaces 13 and 17)', () => {
     expect(nat.cash).toBe(plain.cash);
     // The tanker is explicitly exempt from nationalisation.
     expect(nat.vehicles).toBe(plain.vehicles);
+  });
+
+  /*
+   * The halving covers what the board imposes — profits collected and losses
+   * suffered — not what goods cost. Routing purchases through payBank let a
+   * nationalised company buy at half the list price and score the asset at
+   * full price, which is an arbitrage rather than a penalty.
+   */
+  describe('does not discount the price list (docs/BALANCE.md §4)', () => {
+    /** Runs one purchase for player 0, nationalised or not, and returns what it cost. */
+    function spend(nationalised: boolean, setUp: (s: GameState) => Action): number {
+      const s = game(3);
+      s.players[0]!.cash = 1000;
+      s.players[0]!.nationalised = nationalised;
+      s.phase = 'resolveCard';
+      const action = setUp(s);
+      const before = s.players[0]!.cash;
+      const r = applyAction(s, action);
+      expect(r.ok).toBe(true);
+      return before - s.players[0]!.cash;
+    }
+
+    it('charges a nationalised company the full price for a licence', () => {
+      const buy = (s: GameState): Action => {
+        s.pending = { kind: 'optionalBuyLicence', terrain: 'land', mayDuplicate: false };
+        const free = s.sites.find((x) => x.ownerId === null && x.terrain === 'land')!;
+        return { type: 'buyLicence', siteIds: [free.id] };
+      };
+      expect(spend(true, buy)).toBe(PRICES.licence.land);
+      expect(spend(true, buy)).toBe(spend(false, buy));
+    });
+
+    it('charges the full price for a tower', () => {
+      const buy = (s: GameState): Action => {
+        s.pending = { kind: 'optionalBuyTower' };
+        return { type: 'buyTower', siteId: giveLicence(s, 0, 'land').id };
+      };
+      expect(spend(true, buy)).toBe(PRICES.tower.land);
+      expect(spend(true, buy)).toBe(spend(false, buy));
+    });
+
+    it('charges the full price for a deposit', () => {
+      const buy = (s: GameState): Action => {
+        s.pending = { kind: 'placeDeposit', deposit: 'oil6MT' };
+        const site = giveLicence(s, 0, 'land');
+        site.tower = true;
+        return { type: 'placeDeposit', siteId: site.id, deposit: 'oil6MT' };
+      };
+      expect(spend(true, buy)).toBe(PRICES.oil6MT);
+      expect(spend(true, buy)).toBe(spend(false, buy));
+    });
+
+    it('charges the full price for a tanker and a truck', () => {
+      const tanker = (s: GameState): Action => {
+        s.pending = { kind: 'buyTankerChoice' };
+        return { type: 'buyTanker', partner: null };
+      };
+      expect(spend(true, tanker)).toBe(PRICES.tanker);
+
+      const truck = (s: GameState): Action => {
+        s.pending = { kind: 'buyTruckChoice' };
+        const free = s.sites.find((x) => truckSiteAvailable(s, x, 0))!;
+        return { type: 'buyTruck', siteId: free.id };
+      };
+      expect(spend(true, truck)).toBe(PRICES.truck);
+    });
+
+    it('still halves a loss the board imposes', () => {
+      const s = game(3);
+      s.players[0]!.cash = 1000;
+      s.players[0]!.nationalised = true;
+      s.vehicles.push({ id: 'tk', kind: 'tanker', siteId: null, ownerId: 0, partner: null });
+      const before = s.players[0]!.cash;
+      beginSpace(s, 4); // Temporal — 50 M of repairs
+      expect(before - s.players[0]!.cash).toBe(25);
+    });
+
+    it('pays the full list price back when the bank buys a half share', () => {
+      const s = game(3);
+      s.phase = 'draw';
+      s.players[0]!.nationalised = true;
+      s.vehicles.push({ id: 'tk', kind: 'tanker', siteId: null, ownerId: 0, partner: 'bank' });
+      const before = s.players[0]!.cash;
+      expect(applyAction(s, { type: 'dissolvePartnership', vehicleId: 'tk' }).ok).toBe(true);
+      expect(s.players[0]!.cash - before).toBe(Math.floor(PRICES.tanker / 2));
+    });
   });
 });
 

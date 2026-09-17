@@ -16,18 +16,21 @@ The question put was: *why does a company that scores half still win about 45% o
 games?* **It does not.** At no player count does a nationalised company approach
 parity, let alone 45%.
 
-| Players | Companies ending nationalised | Their share of wins |
-| --- | --- | --- |
-| 2 | 28.8% | 22.3% |
-| 3 | 33.4% | 27.5% |
-| 4 | 35.1% | 22.6% |
-| 5 | 29.4% | 9.2% |
-| 6 | 31.2% | 7.3% |
+| Players | Companies ending nationalised | Share of wins, before the §4 fix | after |
+| --- | --- | --- | --- |
+| 2 | 28.8% | 22.3% | **19.1%** |
+| 3 | 33.8% | 27.5% | **23.5%** |
+| 4 | 35.2% | 22.6% | **20.3%** |
+| 5 | 29.5% | 9.2% | **8.9%** |
+| 6 | 31.1% | 7.3% | **4.7%** |
 
 A nationalised company is under-represented among winners at every count, and the
-penalty grows sharply with table size — at six players it takes 7% of wins on 31% of
-finishes. That is the shape one would expect: more players means more turns, and the
-cost of nationalisation is charged per turn, not at the end.
+penalty grows sharply with table size — at six players it takes under 5% of wins on
+31% of finishes. That is the shape one would expect: more players means more turns,
+and the cost of nationalisation is charged per turn, not at the end.
+
+The "after" column is the engine as it now stands, with the price-list defect in §4
+corrected. Both columns are 300 games per player count.
 
 [Certain] on the numbers. The earlier 45% figure is not reproducible and should be
 treated as superseded; I cannot reconstruct what it measured.
@@ -41,11 +44,12 @@ Per game at 4 players, summed across all companies:
 | Annual profits forgone while nationalised | **92** | cost |
 | End-of-game halving of deposits and trucks | **≈11** | cost |
 | Board bills paid at half | **14** | benefit |
-| Assets bought at half list price | **17** | benefit |
+| ~~Assets bought at half list price~~ | ~~17~~ | removed, see §4 |
 
-Net: roughly **70 per game**, borne by about 1.4 companies — some 50 each, against a
-mean final total near 320. That matches the observed spread directly: mean total 303
-for a company that ends nationalised against 336 for one that does not.
+Net: roughly **90 per game** once the price-list defect is corrected, borne by about
+1.4 companies. That matches the observed spread directly: at 4 players, mean total
+**294** for a company that ends nationalised against **338** for one that does not —
+a gap of 44, up from 33 before the fix.
 
 **The end-of-game halving is not the mechanism.** It removes a mean of **8** from a
 nationalised company's total, about 2.5% of it. Nationalisation hurts almost entirely
@@ -98,7 +102,7 @@ halving, on the marker-based rationale. The "half its assets" reading would incl
 them. Since no tower has ever survived to scoring in 1,600 measured company-ends, the
 distinction is worth exactly nothing in play, and is not worth resolving.
 
-## 4. A defect found while measuring, not yet changed
+## 4. A defect found while measuring — now fixed
 
 `payBank` halves *every* outflow for a nationalised company, and purchases are routed
 through it. A nationalised company therefore buys at half list price and scores the
@@ -116,7 +120,17 @@ buying a licence at the price printed in the price list is neither. The affordab
 check already uses the full price, so the company must *have* the full amount and then
 pays half of it — which reads like an oversight rather than a decision.
 
-The fix is one line of routing: purchases should debit cash directly, leaving
-`payBank` for board-imposed losses. It would cost nationalised companies about 17 per
-game, widening a penalty that is already the right sign. **Not changed** — the rule
-behind it is booklet-sourced and the call belongs to the project owner.
+**Fixed.** `payPrice` and `receivePrice` in `src/engine/economy.ts` now carry every
+price-list transaction — licence, tower, deposit, tanker, truck, and the bank's
+buy-back of a half share — while `payBank` and `receiveFromBank` keep the halving for
+what the board imposes. Six tests in `tests/gameplay.test.ts` pin it; five of them
+fail against the old routing.
+
+The engine already had a precedent for the distinction: interest on a loan to the
+bank was deliberately left unhalved, "a loan return, not a profit of the company's
+operations". A price on the price list is the same kind of thing.
+
+Effect: nationalised companies lose about 17 per game of unearned discount, and
+their win share falls by roughly two points at most player counts and by 2.6 at six
+(§1). The sign was already right; the fix widens a penalty that was being partly
+refunded.
