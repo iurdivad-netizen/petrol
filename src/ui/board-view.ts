@@ -9,6 +9,7 @@ import { DEPOSIT_NAMES, SPACE_NAMES } from '../data/rules';
 import { cardBackSvg, depositSvg, tankerSvg, towerSvg, truckSvg } from './pieces';
 import { CARD_NAMES } from '../data/rules';
 import type { GameState, Site } from '../engine/types';
+import { spaceEffect } from './space-text';
 
 const COMPANY_COLOURS = ['#d4342a', '#1d9099', '#f0b93b', '#7b3fa0', '#2a7d4f', '#e2761b'];
 
@@ -59,7 +60,10 @@ export function renderBoard(state: GameState, handlers: BoardHandlers = {}): HTM
     // Lets the hand highlight where a card would leave the marker, without
     // repainting the whole board on every hover.
     el.dataset['track'] = String(cell.index);
-    el.title = `${cell.space} — ${SPACE_NAMES[cell.space] ?? ''}${cell.verified ? '' : ' (leitura provisória)'}`;
+    el.title =
+      `${cell.space} — ${SPACE_NAMES[cell.space] ?? ''}\n` +
+      `${spaceEffect(cell.space)}` +
+      `${cell.verified ? '' : '\n(leitura provisória)'}`;
 
     const num = document.createElement('div');
     num.textContent = cell.index === PASSAGEM_INDEX ? '★' : String(cell.space);

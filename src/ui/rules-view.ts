@@ -24,6 +24,7 @@ import {
   TURNS_PER_PLAYER,
 } from '../data/rules';
 import type { CardType } from '../engine/types';
+import { spaceEffect, spaceTone, TONE_LABEL, TONE_SIGN } from './space-text';
 
 const M = (n: number) => `${n} M`;
 
@@ -83,59 +84,6 @@ export function priceCard(): HTMLElement {
     'Os lucros são pagos a todas as companhias sempre que o marcador passa ou pára na Passagem de Ano.';
   wrap.appendChild(note);
   return wrap;
-}
-
-/** One line describing what a board space does, built from the rule data. */
-function spaceEffect(id: number): string {
-  const perAsset = (t: Record<string, number>, verb: string) => {
-    const labels: Record<string, string> = {
-      oil2MT: '2 M.T.', oil4MT: '4 M.T.', oil6MT: '6 M.T.',
-      gas: 'gás', truck: 'camião', tanker: 'petroleiro', tower: 'torre',
-    };
-    return `${verb} ` + Object.entries(t).map(([k, v]) => `${labels[k] ?? k} ${v}`).join(', ') + ' M';
-  };
-
-  switch (id) {
-    case 1:
-      return 'Todas as companhias recebem os lucros anuais.';
-    case 2:
-      return `Entrega ${CONFISCATION_COUNT} licenças sem torre nem depósito. Só a partir da ${CONFISCATION_ACTIVE_FROM_PASSAGE}.ª passagem de ano.`;
-    case 3:
-      return `Pode comprar uma licença no mar por ${M(PRICES.licence.sea)}.`;
-    case 5:
-      return `Pode comprar uma licença em terra por ${M(PRICES.licence.land)}.`;
-    case 7:
-      return `Pode comprar uma torre: terra ${M(PRICES.tower.land)}, mar ${M(PRICES.tower.sea)}.`;
-    case 6:
-      return perAsset(SPACE_TARIFFS.oilTax, 'Paga por cada depósito de petróleo:');
-    case 8:
-      return (
-        perAsset(SPACE_TARIFFS.incomeTax, 'Paga por cada:') +
-        `, e ainda ${SPACE_TARIFFS.incomeTaxCashRate * 100}% do dinheiro que lhe restar.`
-      );
-    case 11:
-      return perAsset(SPACE_TARIFFS.gasTax, 'Paga por cada depósito de gás:');
-    case 14:
-      return perAsset(SPACE_TARIFFS.priceRise, 'Recebe por cada depósito:');
-    case 19:
-      return perAsset(SPACE_TARIFFS.priceFall, 'Paga por cada depósito:');
-    case 13:
-      return 'A sua companhia é nacionalizada: recebe e paga metade de tudo até à Livre Empresa.';
-    case 16:
-      return 'Entrega ao banco uma licença com torre. Sem torres, nada deve.';
-    case 17:
-      return 'A nacionalização termina. Volta a receber tudo por inteiro.';
-    case 20:
-      return 'Escolhe qualquer uma das casas 1 a 19.';
-    case 4:
-      return `Paga ${M(SPACE_FLAT_COST[4]!)} de reparações, se tiver petroleiro.`;
-    case 15:
-      return `Paga ${M(SPACE_FLAT_COST[15]!)}, se tiver pelo menos uma torre.`;
-    default: {
-      const flat = SPACE_FLAT_COST[id];
-      return flat ? `Paga ${M(flat)} ao banco.` : '';
-    }
-  }
 }
 
 /** A rule worth reading twice, set apart from the running text. */
@@ -231,7 +179,8 @@ export function rulesContent(playerCount: number): HTMLElement {
   wrap.appendChild(section('As 20 casas à volta do mapa'));
   const spaces = document.createElement('table');
   spaces.className = 'scores spaces';
-  spaces.innerHTML = '<thead><tr><th>N.º</th><th>Casa</th><th>O que acontece</th></tr></thead>';
+  spaces.innerHTML =
+    '<thead><tr><th>N.º</th><th>Casa</th><th>Para quem lá cai</th><th>O que acontece</th></tr></thead>';
   const sbody = document.createElement('tbody');
   for (let id = 1; id <= 20; id++) {
     const tr = document.createElement('tr');
@@ -240,13 +189,27 @@ export function rulesContent(playerCount: number): HTMLElement {
     n.className = [3, 5, 7].includes(id) ? 'teal-num' : 'red-num';
     const name = document.createElement('td');
     name.textContent = SPACE_NAMES[id] ?? '';
+    const tone = document.createElement('td');
+    const chip = document.createElement('span');
+    const t = spaceTone(id);
+    chip.className = `tone tone-${t}`;
+    chip.textContent = `${TONE_SIGN[t]} ${TONE_LABEL[t]}`;
+    tone.appendChild(chip);
     const eff = document.createElement('td');
     eff.textContent = spaceEffect(id);
-    tr.append(n, name, eff);
+    tr.append(n, name, tone, eff);
     sbody.appendChild(tr);
   }
   spaces.appendChild(sbody);
   wrap.appendChild(spaces);
+  wrap.appendChild(callout(
+    'As cores do tabuleiro não são boas e más.',
+    'O verde e o vermelho são os do tabuleiro original: verde marca as quatro casas onde ' +
+    'se recebe ou se pode comprar (1, 3, 5 e 7), vermelho marca todas as outras. Repare ' +
+    'que a 14 sobe o preço do petróleo e a 17 acaba com a nacionalização, e ambas são ' +
+    'vermelhas. A coluna «para quem lá cai» acima é a leitura desta reconstrução, e é ' +
+    'essa que aparece nas cartas da sua mão.',
+  ));
 
   wrap.appendChild(section('Negociar cartas'));
   wrap.appendChild(paragraph(

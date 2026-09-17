@@ -242,7 +242,7 @@ h1, h2, h3 { margin: 0 0 8px; letter-spacing: 0.04em; }
  */
 .card {
   width: 148px;
-  min-height: 176px;
+  min-height: 192px;
   background: #fbf7ec;
   border: 1px solid #9d9384;
   border-radius: 10px;
@@ -319,9 +319,10 @@ h1, h2, h3 { margin: 0 0 8px; letter-spacing: 0.04em; }
  * Amber, matching the outline it draws on the board.
  */
 .card .lands {
-  margin-top: 3px;
-  padding-top: 3px;
+  margin-top: 4px;
+  padding: 4px 4px 3px;
   border-top: 1px dashed #c8c0ad;
+  border-radius: 0 0 4px 4px;
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -330,6 +331,27 @@ h1, h2, h3 { margin: 0 0 8px; letter-spacing: 0.04em; }
   min-width: 0;
   overflow: hidden;
 }
+/* What the square does to whoever lands on it — the reason to play this card. */
+.card .lands-effect {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 2px;
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+.card .lands.tone-gain   { background: rgba(29, 144, 90, 0.10); }
+.card .lands.tone-cost   { background: rgba(212, 52, 42, 0.09); }
+.card .lands.tone-offer  { background: rgba(29, 144, 153, 0.10); }
+.card .lands.tone-choice { background: rgba(240, 185, 59, 0.16); }
+.card .lands.tone-gain   .lands-effect { color: #1d6b3f; }
+.card .lands.tone-cost   .lands-effect { color: #a3231a; }
+.card .lands.tone-offer  .lands-effect { color: #12666d; }
+.card .lands.tone-choice .lands-effect { color: #7a4a00; }
 .card .lands-name {
   /* Two lines at most: a long space name must not push the card's frame. */
   display: -webkit-box;
@@ -342,6 +364,29 @@ h1, h2, h3 { margin: 0 0 8px; letter-spacing: 0.04em; }
   overflow-wrap: anywhere;
 }
 .card:hover .lands, .card:focus .lands { color: #a05c00; }
+
+/*
+ * Whether a square helps or hurts the company that resolves it. This is THIS
+ * RECONSTRUCTION'S reading, not the board's own colouring — the original paints
+ * 1, 3, 5 and 7 teal because they are the buy-or-collect squares, and leaves
+ * 14 and 17 red although both are good news. So the tone never touches a board
+ * cell; it lives on the cards, in the prompt and in the rulebook table.
+ */
+.tone {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+  border: 1px solid currentColor;
+}
+.tone-gain   { color: #1d6b3f; background: rgba(29, 144, 90, 0.14); }
+.tone-cost   { color: #a3231a; background: rgba(212, 52, 42, 0.12); }
+.tone-offer  { color: #12666d; background: rgba(29, 144, 153, 0.14); }
+.tone-choice { color: #7a4a00; background: rgba(240, 185, 59, 0.22); }
 
 /* A rule worth reading twice inside the rulebook. */
 .rule-callout {
@@ -405,6 +450,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 button.secondary { background: var(--cream); }
 button.danger { background: var(--red); color: #fff; }
 
+.prompt .tone { margin-right: 6px; vertical-align: 1px; }
 .prompt {
   background: #fff8e6;
   border-left: 4px solid var(--red);

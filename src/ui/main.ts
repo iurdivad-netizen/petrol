@@ -15,6 +15,7 @@ import { idleLicences, toweredSites } from '../engine/spaces';
 import { ANNUAL_PROFIT, CARD_NAMES, COMPANIES, DEPOSIT_NAMES, PRICES, SPACE_NAMES, SECOND_PASSAGEM_MAX_PLAYERS } from '../data/rules';
 import { MAP, TRACK } from '../data/board';
 import { caption, companyColour, renderBoard } from './board-view';
+import { spaceEffect, spaceShort, spaceTone, TONE_LABEL, TONE_SIGN } from './space-text';
 import { priceCard, rulesContent } from './rules-view';
 import { AI_LEVELS, aiAction, yearsRemaining } from '../engine/ai';
 import type { AiConfig } from '../engine/ai';
@@ -682,9 +683,17 @@ function controls(s: GameState): HTMLElement {
     default: {
       // No pending decision — drive the phase.
       switch (s.phase) {
-        case 'resolveSpace':
-          prompt.textContent = `Casa ${SPACE_NAMES[TRACK.cells[s.markerPos]?.space ?? 1]}.`;
+        case 'resolveSpace': {
+          // Name the square, say plainly whether it helps or hurts, and give
+          // the figures — the player did not choose to be here.
+          const space = TRACK.cells[s.markerPos]?.space ?? 1;
+          const tone = spaceTone(space);
+          prompt.replaceChildren(
+            el('span', `tone tone-${tone}`, `${TONE_SIGN[tone]} ${TONE_LABEL[tone]}`),
+            document.createTextNode(` Casa ${space} — ${SPACE_NAMES[space]}. ${spaceEffect(space)}`),
+          );
           break;
+        }
         case 'draw':
           prompt.textContent = s.deck.length
             ? `Tire uma carta do baralho (${s.deck.length} restantes).`
@@ -855,11 +864,19 @@ function handView(s: GameState): HTMLElement {
     const destIndex = (s.markerPos + card.move) % TRACK.cells.length;
     const dest = TRACK.cells[destIndex];
     if (dest) {
-      const lands = el('div', 'lands');
+      const tone = spaceTone(dest.space);
+      const lands = el('div', `lands tone-${tone}`);
       lands.append(`${next?.company ?? 'Segue'} → ${dest.space}`);
       lands.appendChild(el('span', 'lands-name', caption(dest.space)));
+      lands.appendChild(el('span', 'lands-effect',
+        `${TONE_SIGN[tone]} ${spaceShort(dest.space)}`));
       body.appendChild(lands);
-      c.title = `Deixa o marcador na casa ${dest.space} — ${SPACE_NAMES[dest.space] ?? ''}`;
+      // The effect sentence already says whether it gives or takes, so the
+      // tooltip does not repeat the badge word back at the reader.
+      c.title =
+        `Deixa o marcador na casa ${dest.space} — ${SPACE_NAMES[dest.space] ?? ''}.\n` +
+        `${spaceEffect(dest.space)}\n` +
+        `Cai sobre ${next?.company ?? 'o jogador seguinte'}, não sobre si.`;
     }
 
     // Right edge: AVANCE (n) CASAS.
